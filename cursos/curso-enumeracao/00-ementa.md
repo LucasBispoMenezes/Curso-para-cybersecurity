@@ -2,9 +2,6 @@
 title: "Enumeracao Esoterica: A Superficie que a Ferramenta Nao Ve"
 nivel: avancado
 tags: [enumeracao, dns, certificado, superficie, reconhecimento, ct-logs]
----title: Enumeracao Esoterica: A Superficie que a Ferramenta Nao Ve
-nivel: avancado
-tags: [enumeracao, dns, certificado, superficie, reconhecimento, ct-logs]
 ---# Enumeração Esotérica: A Superfície que a Ferramenta Não Vê
 
 **Ementa do curso · 26 horas · 9 módulos · PT-BR com termos técnicos em inglês**

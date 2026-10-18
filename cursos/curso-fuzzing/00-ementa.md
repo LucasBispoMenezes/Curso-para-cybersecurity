@@ -2,9 +2,6 @@
 title: "Fuzzing e Pesquisa de Vulnerabilidades: do Zero ao Achado Reproduzivel"
 nivel: avancado
 tags: [fuzzing, afl, cobertura, crash, triagem, harness]
----title: Fuzzing e Pesquisa de Vulnerabilidades: do Zero ao Achado Reproduzivel
-nivel: especialista
-tags: [fuzzing, afl, cobertura, crash, triagem, harness]
 ---# Fuzzing e Pesquisa de Vulnerabilidades: do Zero ao Achado Reproduzível
 
 **Ementa do curso · 40 horas · 12 módulos · PT-BR com termos técnicos em inglês**

@@ -2,9 +2,7 @@
 title: "Bash Ofensivo: Automacao para Pentest"
 nivel: basico
 tags: [bash, shell, automacao, pentest, script]
----title: Bash Ofensivo: Automação para Pentest
-nivel: basico
-tags: [bash, shell, automação, pentest, script]
+---
 
 ## Visão geral
 

@@ -2,10 +2,8 @@
 title: "Redes para Profissionais de Seguranca: do Cabo ao Pacote"
 nivel: basico
 tags: [redes, tcp-ip, tcpdump, pacote, dns, tls]
----title: Redes para Profissionais de Seguranca: do Cabo ao Pacote
-nivel: basico
-tags: [redes, tcp-ip, tcpdump, pacote, dns, tls]
----# Redes para Profissionais de Segurança: do Cabo ao Pacote
+---
+# Redes para Profissionais de Segurança: do Cabo ao Pacote
 
 **Ementa do curso · 30 horas · 10 módulos · PT-BR com termos técnicos em inglês**
 

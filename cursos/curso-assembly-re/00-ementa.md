@@ -2,9 +2,7 @@
 title: "Assembly x86-64 e Engenharia Reversa: do Zero ao Avancado"
 nivel: intermediario
 tags: [assembly, x86-64, engenharia-reversa, ghidra, binario, disassembly]
----title: Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
-nivel: basico
-tags: [assembly, x86-64, engenharia-reversa, ghidra, binário, disassembly]
+---
 
 ## Visão geral
 

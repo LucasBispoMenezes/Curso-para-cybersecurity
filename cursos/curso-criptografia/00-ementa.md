@@ -2,9 +2,6 @@
 title: "Criptografia Aplicada e Falhas: Onde o Algoritmo Esta Certo e o Sistema Quebra"
 nivel: avancado
 tags: [criptografia, aes, tls, kdf, nonce, padding-oracle]
----title: Criptografia Aplicada e Falhas: Onde o Algoritmo Esta Certo e o Sistema Quebra
-nivel: intermediario
-tags: [criptografia, aes, tls, kdf, nonce, padding-oracle]
 ---# Criptografia Aplicada e Falhas: Onde o Algoritmo Está Certo e o Sistema Quebra
 
 **Ementa do curso · 28 horas · 10 módulos · PT-BR com termos técnicos em inglês**

@@ -2,9 +2,6 @@
 title: "OSINT Global: Investigacao em Fonte Aberta Atraves de Fronteiras"
 nivel: basico
 tags: [osint, investigacao, fonte-aberta, jurisdicao, due-diligence, verificacao]
----title: OSINT Global: Investigacao em Fonte Aberta Atraves de Fronteiras
-nivel: basico
-tags: [osint, investigacao, fonte-aberta, jurisdicao, due-diligence, verificacao]
 ---# OSINT Global: Investigação em Fonte Aberta Através de Fronteiras
 
 **Ementa do curso · 36 horas · 12 módulos · PT-BR com termos técnicos em inglês**

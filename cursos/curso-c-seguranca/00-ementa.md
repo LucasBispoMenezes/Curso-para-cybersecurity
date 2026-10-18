@@ -2,9 +2,7 @@
 title: "C para Pesquisa de Seguranca: Memoria, Bug e Comportamento Indefinido"
 nivel: intermediario
 tags: [c, memoria, ub, sanitizer, ponteiro, corrupcao]
----title: C para Pesquisa de Seguranca: Memoria, Bug e Comportamento Indefinido
-nivel: basico
-tags: [c, memoria, ub, sanitizer, ponteiro, corrupcao]
+---
 
 ## Progressão — o que você sabe antes e depois
 

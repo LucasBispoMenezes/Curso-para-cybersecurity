@@ -2,9 +2,6 @@
 title: "Parser Differentials: Onde Duas Implementacoes Discordam"
 nivel: especialista
 tags: [parser, differential, framing, waf, harness, divergencia]
----title: Parser Differentials: Onde Duas Implementacoes Discordam
-nivel: especialista
-tags: [parser, differential, framing, waf, harness, divergencia]
 ---# Parser Differentials: Onde Duas Implementações Discordam
 
 **Ementa do curso · 30 horas · 10 módulos · PT-BR com termos técnicos em inglês**
