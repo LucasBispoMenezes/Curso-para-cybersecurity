@@ -1,15 +1,10 @@
 ---
-title: Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
+title: "Assembly x86-64 e Engenharia Reversa: do Zero ao Avancado"
+nivel: intermediario
+tags: [assembly, x86-64, engenharia-reversa, ghidra, binario, disassembly]
+---title: Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
 nivel: basico
 tags: [assembly, x86-64, engenharia-reversa, ghidra, binário, disassembly]
----
-
-
-# Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
-
-**Ementa do curso · 24 horas · 8 módulos · PT-BR com termos técnicos em inglês**
-
----
 
 ## Visão geral
 
@@ -25,19 +20,6 @@ real, comparando versões para achar o que mudou (patch diffing) e automatizando
 
 **Material original.** Referências abertas listadas ao final.
 
----
-
-## Público-alvo
-
-- Desenvolvedores que querem entender o que o compilador faz com o código que escrevem.
-- Profissionais de segurança entrando em análise de malware ou pesquisa de vulnerabilidade.
-- Estudantes de sistemas operacionais que querem ver a teoria acontecer.
-- Curiosos persistentes que já tentaram ler assembly e desistiram na terceira linha.
-
-**Não é** para quem está começando em programação do zero. Você precisa saber programar em
-alguma linguagem — C é o ideal, mas Python ou Go servem como base.
-
----
 
 ## Pré-requisitos
 
@@ -50,22 +32,6 @@ alguma linguagem — C é o ideal, mas Python ou Go servem como base.
 
 Se ponteiros te assustam, faça o Módulo 2 com calma — ele existe justamente para isso.
 
----
-
-## Objetivos de aprendizagem
-
-Ao final, você será capaz de:
-
-1. Escrever e compilar assembly x86-64 funcional a partir do zero.
-2. Explicar o modelo de memória e o papel de cada registrador na ABI System V.
-3. Converter código C em assembly mentalmente, prevendo o que o compilador vai gerar.
-4. Ler disassembly de função desconhecida e reconstruir sua lógica em pseudocódigo.
-5. Identificar loops, condicionais, chamadas de função e estruturas de dados em assembly.
-6. Reconhecer padrões de código malicioso sem executá-lo.
-7. Comparar duas versões de um binário e isolar o que mudou.
-8. Automatizar análise com ferramentas de script.
-
----
 
 ## Estrutura
 
@@ -82,23 +48,6 @@ Ao final, você será capaz de:
 
 Cada módulo: teoria → demonstração comentada → lab → avaliação. ~60% prática.
 
----
-
-## Ambiente de laboratório
-
-Uma VM Linux (Debian 12, Ubuntu 22.04+, ou Kali) com:
-
-```bash
-sudo apt update
-sudo apt install -y build-essential gcc gdb nasm binutils \
-                    file strace ltrace python3 python3-pip
-# Ghidra: baixe em https://ghidra-sre.org/ (requer JDK 17+)
-```
-
-Todos os binários analisados são **compilados por você** ou **amostras didáticas** escritas
-para o curso. Nenhum malware real é usado.
-
----
 
 ## ⚠ Ética e limites
 
@@ -116,21 +65,6 @@ binário que não seja seu:
 
 Os labs deste curso são todos com código-fonte próprio. Você tem autorização por definição.
 
----
-
-## Referências abertas
-
-- **Intel 64 and IA-32 Architectures Software Developer's Manual** — a referência final
-- **AMD64 Architecture Programmer's Manual**
-- **System V Application Binary Interface, AMD64 Architecture Processor Supplement**
-- **GNU Binutils Documentation** — https://sourceware.org/binutils/docs/
-- **GDB Documentation** — https://sourceware.org/gdb/documentation/
-- **NASM Manual** — https://www.nasm.us/doc/
-- **Ghidra Documentation** — https://ghidra-sre.org/
-- **"Reverse Engineering for Beginners", Dennis Yurichev** — livre para download
-- **MITRE ATT&CK** — https://attack.mitre.org/
-
----
 
 ## Critérios de avaliação
 
@@ -141,7 +75,3 @@ Os labs deste curso são todos com código-fonte próprio. Você tem autorizaç�
 | Projeto final (análise completa) | 25% | Integração de tudo |
 
 Nota mínima sugerida: 70%.
-
----
-
-*Material didático original. Nenhum trecho reproduzido de obra comercial protegida.*

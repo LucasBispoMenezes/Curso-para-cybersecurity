@@ -1,15 +1,10 @@
 ---
-title: Anonimato e Privacidade na Internet: Tor, Proxies e o que Realmente Protege
+title: "Anonimato e Privacidade na Internet: Tor, Proxies e o que Realmente Protege"
+nivel: basico
+tags: [anonimato, tor, vpn, opsec, fingerprint, trafego]
+---title: title: "Anonimato e Privacidade na Internet: Tor, Proxies e o que Realmente Protege"
 nivel: basico
 tags: [anonimato, tor, vpn, opsec, fingerprint, tráfego]
----
-
-
-# Anonimato e Privacidade na Internet: Tor, Proxies e o que Realmente Protege
-
-**Ementa do curso · 34 horas · 12 módulos · PT-BR com termos técnicos em inglês**
-
----
 
 ## Sobre o que é este curso — leia primeiro
 
@@ -46,25 +41,6 @@ jurisdições. Usar Tor, VPN ou proxy é legal. O que é crime é o ato que voc�
 e essa distinção importa, porque criminalizar a ferramenta é o que coloca jornalista e ativista em
 risco.
 
----
-
-## Visão geral
-
-A maioria do material sobre anonimato na internet repete três conselhos: "use Tor", "use VPN",
-"use DNS cifrado". Nenhum deles explica **o que cada um protege, de quem, e onde a proteção
-quebra**.
-
-Este curso vai na direção oposta: cada capítulo pergunta *"contra qual adversário isto protege, e
-onde a proteção falha?"*. Você vai construir circuitos, ler células Tor, ver seu próprio tráfego
-vazando identidade, e aprender a detectar vazamento antes que alguém detecte por você.
-
-O fio condutor: **anonimato é uma cadeia, e a cadeia vale o elo mais fraco.** Um circuito Tor
-perfeito protegido por um browser que vaza `WebRTC` e um DNS que sai em claro não é anonimato — é
-sensação de anonimato, que é pior que nada porque muda comportamento.
-
-**Material original.** Referências abertas ao final.
-
----
 
 ## Público-alvo
 
@@ -77,21 +53,6 @@ sensação de anonimato, que é pior que nada porque muda comportamento.
 
 **Não é** para quem nunca usou terminal. E não é um curso de "dicas": é engenharia.
 
----
-
-## Pré-requisitos
-
-| Área | Nível exigido |
-|---|---|
-| Linux | Terminal, `ss`, `tcpdump` básico, edição de arquivo |
-| Rede | Modelo TCP/IP, DNS, TLS — **ou o curso de redes deste material** |
-| Criptografia | Noção de chave pública, simétrica e hash |
-| Sistema | Processos, sockets, variável de ambiente |
-
-**Recomendado:** fazer o curso de redes deste material antes. Este curso constrói pesadamente
-sobre análise de captura, DNS, TLS e `tcpdump`.
-
----
 
 ## Objetivos de aprendizagem
 
@@ -112,28 +73,6 @@ Ao final, você será capaz de:
 11. Escolher a ferramenta certa para cada adversário: VPN, Tor, proxy, mistura de rede.
 12. Medir a sua própria superfície de exposição antes e depois, com evidência.
 
----
-
-## Estrutura
-
-| # | Módulo | Foco | Horas |
-|---|---|---|---|
-| 1 | Modelagem de ameaça para privacidade | De quem você se protege; sigilo ≠ anonimato | 2 |
-| 2 | Como a identidade vaza | Camadas de identificação: IP, DNS, TLS, browser, comportamento | 3 |
-| 3 | Proxies: HTTP, SOCKS4, SOCKS5 | Como redirecionam, o que encaminham, onde vazam | 3 |
-| 4 | VPN: o que ela é e o que ela não é | Túnel, confiança no provedor, mitos comuns | 3 |
-| 5 | Tor por dentro I: diretório e circuito | Consenso, guarda, extensão de circuito, célula | 4 |
-| 6 | Tor por dentro II: célula, stream, rendes-vous | Anatomia da célula, serviço oculto, v3 onion | 4 |
-| 7 | Anatomia do vazamento | DNS, WebRTC, IPv6, timezone, fonte, metadado | 4 |
-| 8 | Fingerprinting e superfície de browser | Por que Tor Browser é o que é; medição própria | 3 |
-| 9 | Resistência a correlação | Correlação de fluxo, ataque de confirmação, mixnet | 3 |
-| 10 | Tor em ambiente corporativo | Detectar, entender, e **não** bloquear errado | 3 |
-| 11 | Ferramenta certa para cada adversário | Comparativo por modelo de ameaça | 2 |
-| 12 | Projeto: sua superfície de exposição | Medir antes e depois, com evidência | 3 |
-
-Cada módulo: teoria → demonstração em laboratório próprio → análise → avaliação. ~55% prática.
-
----
 
 ## ⚠ Ética, legalidade e conduta — vale para o curso inteiro
 
@@ -174,31 +113,6 @@ Metadado que você guarda, log que você mantém, captura que você faz — tudo
 regra: colete o mínimo, retenha o mínimo, destrua no prazo. E sob a LGPD, isso não é boa prática —
 é obrigação.
 
----
-
-## O laboratório
-
-Todo laboratório é **local e próprio**:
-
-```
-┌────────────────────────────────────────────────────────────────────┐
-│                    SUA MÁQUINA / VM ISOLADA                        │
-│                                                                    │
-│  ┌──────────────┐   ┌──────────────┐   ┌───────────────────────┐  │
-│  │ cliente      │   │ observador   │   │ serviço oculto        │  │
-│  │ Tor + curl   │◀──│ tcpdump +    │   │ (seu, local, didático)│  │
-│  │ browser      │   │ tshark       │   │                       │  │
-│  └──────────────┘   └──────────────┘   └───────────────────────┘  │
-│                                                                    │
-│  faixa: 10.13.13.0/24   (quarta faixa do material — separada)     │
-└────────────────────────────────────────────────────────────────────┘
-```
-
-⚠ **Você vai se conectar à rede Tor real no Módulo 5 em diante** — porque é a única forma de
-estudar o Tor de verdade. Isso é uso legítimo e legal. Os laboratórios de serviço oculto são
-**locais**, no seu próprio `onion service` de estudo.
-
----
 
 ## Ambiente
 
@@ -225,21 +139,6 @@ pip3 install stem requests
 não tem as proteções de fingerprint do Tor Browser — e confundir os dois é o erro prático mais
 comum do tema.
 
----
-
-## Critérios de avaliação
-
-| Instrumento | Peso | O que mede |
-|---|---|---|
-| Labs por módulo (12) | 50% | Medição própria, com evidência |
-| Relatório de vazamento (Módulo 7) | 20% | O que vaza, por qual canal, com prova |
-| Análise de circuito (Módulos 5 e 6) | 15% | Leitura de captura e de consenso |
-| Projeto final (Módulo 12) | 15% | Superfície de exposição medida antes e depois |
-
-**Rubrica central:** você não entrega "usei Tor". Você entrega **a captura**, **a medição** e **o
-que ela revela** — inclusive o que continua exposto depois.
-
----
 
 ## Referências abertas
 
@@ -261,9 +160,3 @@ que ela revela** — inclusive o que continua exposto depois.
 - **NIST SP 800-77** (IPsec VPN) · **RFC 7296** (IKEv2)
 - **WireGuard whitepaper**
 - **"This is not a game: anonymity is not a crime"** — material de conscientização
-
----
-
-*Material didático original, de propósito defensivo e de proteção de privacidade. Nenhum trecho
-reproduzido de obra comercial protegida, e nenhum material que ensine desanonimização de terceiro
-ou evasão de investigação legítima.*

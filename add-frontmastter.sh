@@ -12,7 +12,7 @@
 #     ./add-frontmatter.sh --check         # lista quais ja tem / quais faltam
 #
 #  Seguro para rodar 2x: se o arquivo ja comeca com "---", ele e pulado.
-#  Faz backup .bak na primeira alteracao de cada arquivo.
+#  Backups vao para .frontmatter-backup/ (fora de cursos/).
 # ============================================================================
 
 set -euo pipefail
@@ -21,6 +21,7 @@ DRY_RUN="${DRY_RUN:-0}"
 CHECK_ONLY="${CHECK_ONLY:-0}"
 BASE_DIR="."
 CORES=1
+BACKUP_DIR=".frontmatter-backup"
 
 for arg in "$@"; do
   case "$arg" in
@@ -46,6 +47,13 @@ info() { printf "  %b\n" "$*"; }
 ok()   { printf "  ${C_OK}%b${C_OFF}\n" "$*"; }
 avi()  { printf "  ${C_AVI}%b${C_OFF}\n" "$*"; }
 err()  { printf "  ${C_ERR}%b${C_OFF}\n" "$*" >&2; }
+
+# ---------------------------------------------------------------------------
+# Escapa um valor para YAML entre aspas duplas
+# ---------------------------------------------------------------------------
+escapar() {
+  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
 
 # ---------------------------------------------------------------------------
 # Tabela: curso -> titulo | nivel | tags
@@ -75,15 +83,16 @@ titulo() { # $1 = nome da pasta
   esac
 }
 
+# nivel conforme a lista que voce definiu
 nivel() {
   case "$1" in
-    curso-anonimato|curso-assembly-re|curso-bash-ofensivo|curso-c-seguranca|curso-linux-seguranca|curso-osint|curso-redes)
+    curso-bash-ofensivo|curso-redes|curso-osint|curso-anonimato)
       echo "basico" ;;
-    curso-criptografia|curso-pesquisa-seguranca)
+    curso-assembly-re|curso-linux-seguranca|curso-c-seguranca|curso-malware|curso-apt-c2)
       echo "intermediario" ;;
-    curso-enumeracao|curso-malware)
+    curso-enumeracao|curso-criptografia|curso-pesquisa-seguranca|curso-fuzzing)
       echo "avancado" ;;
-    curso-apt-c2|curso-deteccao-evasao|curso-exploit|curso-fuzzing|curso-fuzzing-avancado|curso-http-smuggling|curso-parser-differentials|curso-patch-diffing)
+    curso-exploit|curso-patch-diffing|curso-parser-differentials|curso-http-smuggling|curso-deteccao-evasao|curso-fuzzing-avancado)
       echo "especialista" ;;
     *) return 1 ;;
   esac
@@ -137,7 +146,7 @@ printf "\n"
 # Aplica
 # ---------------------------------------------------------------------------
 n_aplicados=0; n_ok=0; n_falta=0; n_sem=0
-aplicados=(); pulados=(); faltando=()
+n_pulados_existentes=0; n_reparados=0
 
 for dir in "$RAIZ"/curso-*; do
   [[ -d "$dir" ]] || continue
@@ -159,41 +168,68 @@ for dir in "$RAIZ"/curso-*; do
   primeira="$(head -n 1 "$alvo")"
 
   if [[ "$primeira" == "---" ]]; then
+    # Ja tem frontmatter: verifica se o title esta entre aspas.
+    linha_title="$(grep -m1 '^title:' "$alvo" || true)"
+
+    if [[ -n "$linha_title" && ! "$linha_title" =~ ^title:[[:space:]]*\" ]]; then
+      # Title sem aspas — provavel causa do YAML invalido.
+      if [[ "$CHECK_ONLY" == 1 ]]; then
+        avi "! $curso — frontmatter presente, mas title SEM aspas"
+        (( n_falta++ )) || true
+        continue
+      fi
+
+      if [[ "$DRY_RUN" == 1 ]]; then
+        printf "  ${C_TIT}~ %s${C_OFF} ${C_DIM}(reparar aspas do title)${C_OFF}\n" "$curso"
+        continue
+      fi
+
+      mkdir -p "$BACKUP_DIR"
+      [[ -f "$BACKUP_DIR/$curso.md" ]] || cp "$alvo" "$BACKUP_DIR/$curso.md"
+
+      # Reconstroi o bloco inteiro, agora com aspas
+      corpo="$(sed '1{/^---$/d}; /^---$/,/^---$/d' "$alvo" | sed '1{/^$/d}')"
+      bloco="$(printf -- '---\ntitle: "%s"\nnivel: %s\ntags: %s\n---\n\n' \
+                "$(escapar "$(titulo "$curso")")" "$(nivel "$curso")" "$(tags "$curso")")"
+      printf '%s%s\n' "$bloco" "$corpo" > "$alvo"
+
+      ok "~ $curso — title reparado ($(nivel "$curso"))"
+      (( n_reparados++ )) || true
+      continue
+    fi
+
     if [[ "$CHECK_ONLY" == 1 ]]; then
       ok "= $curso — ja tem frontmatter"
     else
       info "${C_DIM}= $curso — ja tem, pulado${C_OFF}"
     fi
     (( n_ok++ )) || true
-    pulados+=("$curso")
     continue
   fi
 
   if [[ "$CHECK_ONLY" == 1 ]]; then
     avi "- $curso — SEM frontmatter"
     (( n_falta++ )) || true
-    faltando+=("$curso")
     continue
   fi
-
-  bloco="$(printf -- '---\ntitle: %s\nnivel: %s\ntags: %s\n---\n\n' \
-            "$(titulo "$curso")" "$(nivel "$curso")" "$(tags "$curso")")"
 
   if [[ "$DRY_RUN" == 1 ]]; then
-    printf "  ${C_TIT}~ %s${C_OFF} ${C_DIM}(%s)${C_OFF}\n" "$curso" "$(nivel "$curso")"
-    aplicados+=("$curso")
+    printf "  ${C_TIT}+ %s${C_OFF} ${C_DIM}(%s)${C_OFF}\n" "$curso" "$(nivel "$curso")"
+    n_aplicados=$((n_aplicados+1))
     continue
   fi
 
-  # backup so na primeira vez
-  [[ -f "$alvo.bak" ]] || cp "$alvo" "$alvo.bak"
+  mkdir -p "$BACKUP_DIR"
+  [[ -f "$BACKUP_DIR/$curso.md" ]] || cp "$alvo" "$BACKUP_DIR/$curso.md"
+
+  bloco="$(printf -- '---\ntitle: "%s"\nnivel: %s\ntags: %s\n---\n\n' \
+            "$(escapar "$(titulo "$curso")")" "$(nivel "$curso")" "$(tags "$curso")")"
 
   tmp="$(mktemp)"
   { printf '%s' "$bloco"; cat "$alvo"; } > "$tmp"
   mv "$tmp" "$alvo"
 
   ok "+ $curso — $(nivel "$curso")"
-  aplicados+=("$curso")
   (( n_aplicados++ )) || true
 done
 
@@ -202,15 +238,18 @@ done
 # ---------------------------------------------------------------------------
 printf "\n${C_TIT}Resumo${C_OFF}\n"
 if [[ "$CHECK_ONLY" == 1 ]]; then
-  info "com frontmatter: ${C_OK}${n_ok}${C_OFF}"
-  info "sem frontmatter: ${C_AVI}${n_falta}${C_OFF}"
+  info "com frontmatter:      ${C_OK}${n_ok}${C_OFF}"
+  info "precisando de ajuste: ${C_AVI}${n_falta}${C_OFF}"
 else
-  info "aplicados:  ${C_OK}${n_aplicados}${C_OFF}"
-  info "ja tinham:  ${n_ok}"
+  info "aplicados:   ${C_OK}${n_aplicados}${C_OFF}"
+  info "reparados:   ${C_OK}${n_reparados}${C_OFF}"
+  info "ja tinham:   ${n_ok}"
 fi
-[[ "$n_sem" -gt 0 ]] && avi "ignorados:  ${n_sem}"
-info "backups:    ${C_DIM}*.bak (apague quando conferir: find \"$RAIZ\" -name '00-ementa.md.bak' -delete)${C_OFF}"
+[[ "$n_sem" -gt 0 ]] && avi "ignorados:   ${n_sem}"
+info "backups:     ${C_DIM}${BACKUP_DIR}/ (apague depois de conferir)${C_OFF}"
 printf "\n"
 
-[[ "$n_aplicados" -gt 0 && "$DRY_RUN" == 0 ]] && ok "Pronto. Confira 1 arquivo antes de comitar."
+if [[ "$n_aplicados" -gt 0 || "$n_reparados" -gt 0 ]]; then
+  [[ "$DRY_RUN" == 0 ]] && ok "Pronto. Confira 1 arquivo antes de comitar."
+fi
 exit 0

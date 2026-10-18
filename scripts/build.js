@@ -11,8 +11,19 @@ const OUT = "public";
 marked.setOptions({ gfm: true, breaks: false });
 
 /* ============================================================
+   NIVEIS — taxonomia fixa.
+   Valor no front matter da ementa; rotulo legivel aqui.
+   Ausente ou invalido NAO quebra: entra em "Outras trilhas".
+   ============================================================ */
+const NIVEIS = {
+  basico: { ordem: 0, nome: "Básico" },
+  intermediario: { ordem: 1, nome: "Intermediário" },
+  avancado: { ordem: 2, nome: "Avançado" },
+  especialista: { ordem: 3, nome: "Especialista" },
+};
+
+/* ============================================================
    POS-PROCESSAMENTO DO CODIGO
-   Opera sobre a saida do marked, nao sobre a API do renderer.
    ============================================================ */
 const escapeHtml = (s) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -60,11 +71,9 @@ const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-// Cabecalhos estruturais que nao servem como titulo do curso.
 const TITULO_GENERICO =
   /^(ementa|index|indice|sumario|conteudo|conteúdo|sobre|introducao|introdução|apresentacao|apresentação|curso|descricao|descrição|readme)$/i;
 
-/* Le o primeiro titulo de nivel 1 do corpo que NAO seja cabecalho generico. */
 const titleFrom = (content, fallback) => {
   for (const l of String(content).split("\n")) {
     const m = l.match(/^[ \t]*#[ \t]+(.+?)[ \t]*$/);
@@ -76,9 +85,8 @@ const titleFrom = (content, fallback) => {
   return fallback;
 };
 
-/* Primeiro paragrafo util como descricao, sem marcadores de Markdown. */
 const excerptFrom = (content, data) => {
-  if (data.description) return data.description;
+  if (data && data.description) return data.description;
 
   const linhas = String(content)
     .split("\n")
@@ -100,6 +108,31 @@ const excerptFrom = (content, data) => {
     return limpo.length > 200 ? limpo.slice(0, 197) + "..." : limpo;
   }
   return "";
+};
+
+/* ---------- front matter: nivel ---------- */
+const nivelDe = (data) => {
+  if (!data) return null;
+  const v = slugify(data.nivel || "");
+  return NIVEIS[v] ? v : null;
+};
+
+/* ---------- front matter: tags ----------
+   "Use-After-Free" e "use after free" viram a mesma tag. */
+const tagsDe = (data) => {
+  if (!data || !data.tags) return [];
+  const bruto = Array.isArray(data.tags) ? data.tags : String(data.tags).split(",");
+  return [...new Set(bruto.map((t) => slugify(t)).filter(Boolean))].sort();
+};
+
+/* ---------- horas: front matter tem prioridade ---------- */
+const horasDe = (data, content) => {
+  const declarado = Number(data && data.horas);
+  if (Number.isInteger(declarado) && declarado > 0) return declarado;
+
+  const m = String(content || "").match(/(\d{1,3})\s*(?:horas?|h)\b/i);
+  const n = m ? Number(m[1]) : null;
+  return n && n > 0 && n < 500 ? n : null;
 };
 
 function walk(dir) {
@@ -140,11 +173,8 @@ const IMG_RE = /\.(png|jpe?g|webp|gif|svg|avif)$/i;
 
 /* ============================================================
    IMAGENS DO CURSO
-   Copia cursos/<curso>/img/** para public/cursos/<curso>/img/**
-   e escolhe a capa: cover.* / capa.* / thumb.* / banner.* e,
-   se nao houver nenhuma, a primeira imagem em ordem natural.
    ============================================================ */
-function copiarImagens(dirCurso, folder, problemas) {
+function copiarImagens(dirCurso, folder) {
   const origem = path.join(dirCurso, "img");
   if (!fs.existsSync(origem)) return null;
 
@@ -183,6 +213,7 @@ if (!fs.existsSync(ROOT)) {
    ============================================================ */
 const cursos = [];
 const problemas = [];
+const semNivel = [];
 let imagensCopiadas = 0;
 
 for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
@@ -198,7 +229,7 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
 
   if (fs.existsSync(readme)) {
     const brutoAp = fs.readFileSync(readme, "utf8");
-    const { data: dataAp, content: contentAp } = matter(brutoAp);
+    const { content: contentAp } = matter(brutoAp);
     try {
       apresentacaoHtml = decorate(marked.parse(contentAp));
       temApresentacao = true;
@@ -211,7 +242,21 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
   const parsed = arquivos.map((file) => {
     const nome = path.basename(file, ".md");
     const bruto = fs.readFileSync(file, "utf8");
-    const { data, content } = matter(bruto);
+
+    let data = {};
+    let content = bruto;
+
+    try {
+      const m = matter(bruto);
+      data = m.data || {};
+      content = m.content;
+    } catch (err) {
+      problemas.push(
+        `${path.relative(ROOT, file)}: YAML invalido — ${err.reason || err.message}`
+      );
+      // segue com o arquivo bruto: o curso publica sem metadados
+    }
+
     const limpo = nome.replace(/^\d+[-_]?/, "");
     const rank = RANK(nome);
 
@@ -227,6 +272,8 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
       nome,
       rank,
       isIndex: rank === 0,
+      data,
+      content,
       title:
         data.title ||
         titleFrom(content, limpo.replace(/[-_]/g, " ")) ||
@@ -239,6 +286,7 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
     };
   });
 
+
   const index = parsed.find((p) => p.isIndex);
   const aulas = parsed
     .filter((p) => !p.isIndex)
@@ -249,26 +297,44 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
         a.title.localeCompare(b.title)
     );
 
-  // Capa: front matter tem prioridade; senao, a pasta img/ do curso decide.
-  const capaAuto = copiarImagens(dir, entry.name, problemas);
+  /* ---------- nivel e tags (tolerantes) ---------- */
+  const nivel = index ? nivelDe(index.data) : null;
+  const tags = index ? tagsDe(index.data) : [];
+
+  if (nivel === null) {
+    const brutoNivel = String(index?.data?.nivel ?? "").trim();
+    semNivel.push(brutoNivel ? `${entry.name} (nivel: "${brutoNivel}")` : entry.name);
+  }
+
+  /* ---------- capa ---------- */
+  const capaAuto = copiarImagens(dir, entry.name);
   if (capaAuto) imagensCopiadas++;
 
   const coverFile = index?.data?.cover;
   const cover = coverFile ? String(coverFile).replace(/^\.?\/?/, "") : capaAuto;
 
+  /* ---------- horas ---------- */
+  const horas = index ? horasDe(index.data, index.content) : null;
   const minutos = aulas.reduce((n, a) => n + a.minutes, 0);
 
   cursos.push({
     slug: slugify(entry.name.replace(/^\d+[-_]?/, "")),
     folder: entry.name,
-    order: orderOf(entry.name),
     title:
       index?.title ||
       entry.name.replace(/^\d+[-_]?/, "").replace(/[-_]/g, " "),
     description: index?.excerpt || "",
     cover,
-    hours: Math.max(1, Math.round(minutos / 60)),
+
+    nivel,
+    nivelOrdem: nivel ? NIVEIS[nivel].ordem : 99,
+    nivelNome: nivel ? NIVEIS[nivel].nome : null,
+    tags,
+
+    horas,
+    hours: horas || Math.max(1, Math.round(minutos / 60)),
     minutes: minutos,
+
     html: index?.html || "",
     hasEmenta: Boolean(index),
     temApresentacao,
@@ -282,7 +348,27 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
   });
 }
 
-cursos.sort((a, b) => a.order - b.order || a.folder.localeCompare(b.folder));
+cursos.sort((a, b) => a.nivelOrdem - b.nivelOrdem || a.title.localeCompare(b.title));
+
+/* ============================================================
+   TOTALIZADORES
+   ============================================================ */
+const niveis = Object.entries(NIVEIS)
+  .map(([slug, n]) => {
+    const doNivel = cursos.filter((c) => c.nivel === slug);
+    return {
+      slug,
+      nome: n.nome,
+      ordem: n.ordem,
+      total: doNivel.length,
+      horas: doNivel.reduce((s, c) => s + (c.hours || 0), 0),
+      aulas: doNivel.reduce((s, c) => s + c.aulas.length, 0),
+      cursos: doNivel.map((c) => c.slug),
+    };
+  })
+  .sort((a, b) => a.ordem - b.ordem);
+
+const todasTags = [...new Set(cursos.flatMap((c) => c.tags))].sort();
 
 /* ============================================================
    SAIDA
@@ -295,6 +381,9 @@ fs.writeFileSync(
       generatedAt: new Date().toISOString(),
       totalCursos: cursos.length,
       totalAulas: cursos.reduce((n, c) => n + c.aulas.length, 0),
+      totalHoras: cursos.reduce((s, c) => s + (c.hours || 0), 0),
+      niveis,
+      tags: todasTags,
       cursos,
     },
     null,
@@ -306,29 +395,44 @@ fs.writeFileSync(
    RELATORIO
    ============================================================ */
 const totalAulas = cursos.reduce((n, c) => n + c.aulas.length, 0);
-console.log(`${cursos.length} curso(s) e ${totalAulas} aula(s) em ${OUT}/cursos.json`);
+const totalHoras = cursos.reduce((s, c) => s + (c.hours || 0), 0);
+
+console.log(
+  `${cursos.length} curso(s) e ${totalAulas} aula(s) e ${totalHoras}h em ${OUT}/cursos.json`
+);
+
+for (const n of niveis) {
+  if (n.total) console.log(`  ${n.nome}: ${n.total} trilha(s), ${n.horas}h`);
+}
+
+const fora = cursos.filter((c) => !c.nivel).length;
+if (fora) console.log(`  Sem nivel: ${fora} trilha(s)`);
+
+if (todasTags.length) console.log(`  ${todasTags.length} tag(s) em uso`);
 
 if (imagensCopiadas) {
-  console.log(`${imagensCopiadas} curso(s) com pasta img/ copiada.`);
+  console.log(`  ${imagensCopiadas} curso(s) com pasta img/ copiada.`);
 }
 
 const comAp = cursos.filter((c) => c.temApresentacao).length;
-console.log(`${comAp} curso(s) com README de apresentacao.`);
+if (comAp) console.log(`  ${comAp} curso(s) com README de apresentacao.`);
+
+if (semNivel.length) {
+  console.log(`Aviso: "nivel:" ausente ou invalido em ${semNivel.length} — vao para "Outras trilhas":`);
+  semNivel.forEach((f) => console.log("  - " + f));
+  console.log(`  valores aceitos: ${Object.keys(NIVEIS).join(", ")}`);
+}
 
 const semCapa = cursos.filter((c) => !c.cover).map((c) => c.folder);
 if (semCapa.length) {
-  console.log(`Aviso: sem capa em ${semCapa.length} curso(s): ${semCapa.join(", ")}`);
+  console.log(`Aviso: sem capa em ${semCapa.length} curso(s)`);
 }
 
 const semEmenta = cursos.filter((c) => !c.hasEmenta).map((c) => c.folder);
-if (semEmenta.length) {
-  console.log(`Aviso: sem ementa em ${semEmenta.join(", ")}`);
-}
+if (semEmenta.length) console.log(`Aviso: sem ementa em ${semEmenta.join(", ")}`);
 
 const semAulas = cursos.filter((c) => !c.aulas.length).map((c) => c.folder);
-if (semAulas.length) {
-  console.log(`Aviso: sem aulas em ${semAulas.join(", ")}`);
-}
+if (semAulas.length) console.log(`Aviso: sem aulas em ${semAulas.join(", ")}`);
 
 if (problemas.length) {
   console.log("Arquivos com erro de parsing:");

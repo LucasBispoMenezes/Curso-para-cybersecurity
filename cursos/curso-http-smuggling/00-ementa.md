@@ -1,31 +1,14 @@
 ---
-title: HTTP Smuggling e Confusao de Camada: O Framing Como Ataque
+title: "HTTP Smuggling e Confusao de Camada: O Framing Como Ataque"
+nivel: especialista
+tags: [http, smuggling, framing, desync, http-2, proxy]
+---title: HTTP Smuggling e Confusao de Camada: O Framing Como Ataque
 nivel: especialista
 tags: [http, smuggling, framing, desync, http-2, proxy]
 ---# HTTP Smuggling e Confusão de Camada: O Framing Como Ataque
 
 **Ementa do curso · 32 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 
----
-
-## Progressão — o que você sabe antes e depois
-
-| | No módulo 1 | No último módulo |
-|---|---|---|
-| **Framing** | Sabe que existe | ⚠ **Conhece as 10 variantes** |
-| **TE / CL** | O caso clássico | ⚠ **Todas as combinações abusáveis** |
-| **Camadas** | Duas | ⚠ **A cadeia inteira, medida** |
-| **HTTP/2** | Outro protocolo | ⚠ **A conversão H2→H1 como ataque** |
-| **Variante** | procura na doc | ⚠ **Aplica o padrão a alvos novos** |
-| **Ferramenta** | Não conhece | `smuggler`, harness próprio, Burp |
-| **Resultado** | "há uma discordância" | ⚠ **O desync MEDIDO, com evidência** |
-
-**Pré-requisito duro:** curso de **Parser Differentials** (módulos 5, 6 e 7) · curso de **Fuzzing**
-(o harness) · **Framing** entendido como invariante.
-
-⚠ **Sem o de Parser Differentials, você não tem o método.** **Sem o harness, você não mede.**
-
----
 
 ## Por que este curso existe
 
@@ -66,46 +49,6 @@ rendendo** — **porque a spec é de 1999 e as implementações continuam a inte
 distintas** — **e cada uma é uma combinação diferente de onde a divergência está.** **Não é um bug;
 é uma família.**
 
----
-
-## ⚠ Nota de propósito e conduta
-
-⚠ **Este é o curso com a linha mais estreita do material** — **porque o exploit aqui é real, imediato
-e prejudicial.**
-
-| Este curso faz | **Não** faz |
-|---|---|
-| Duas camadas **no seu lab** | ⚠ Camadas de terceiro |
-| Mede o **desync** localmente | ⚠ Mede em produção alheia |
-| **Reporta** ao mantenedor | Publica antes da correção |
-| Lê a spec e o CVE | ⚠ Testa alvo que não é seu |
-| Reproduz em **alvo seu ou CTF** | ⚠ Reproduz em serviço de ninguém |
-
-⚠ **A regra que vale o curso inteiro:**
-
-> **Você sobe Nginx, HAProxy e um backend no SEU lab, todos em 127.0.0.1.** **O desync é medido
-> entre processos seus. E o achado vai ao mantenedor.**
-
-⚠ **E a razão de a linha ser mais estreita que nos outros cursos:** **um smuggler funcional contra
-infraestrutura de terceiro é crime consumado** — **não há "acesso indevido sem intenção".** **O
-payload é a execução.**
-
-⚠ **A tabela do que é lícito e o que não é, sem ambiguidade:**
-
-| Ato | Lícito? |
-|---|---|
-| Subir nginx + backend no lab | ✓ |
-| Medir o desync entre eles | ✓ |
-| Ler o código do proxy | ✓ |
-| ⚠ Mandar um payload desync a **qualquer host que não é seu** | ⚠ **CRIME** |
-| ⚠ Testar CDN, WAF ou proxy de produção | ⚠ **CRIME** |
-| ⚠ Usar o smuggling para **acessar** algo | ⚠ **CRIME** |
-| Reportar ao mantenedor | ✓ |
-
-⚠ **No Brasil:** art. 154-A (acesso indevido) e art. 266 (interrupção). **E o smuggling frequentemente
-causa os dois:** **você acessa o que não devia (154-A) e desincroniza o serviço (266).**
-
----
 
 ## Objetivos de aprendizagem
 
@@ -122,27 +65,6 @@ Ao final, você será capaz de:
 9. Caçar a variante **sistematicamente** — o padrão, aplicado.
 10. Reportar ao mantenedor **com evidência e sem expor terceiros**.
 
----
-
-## Estrutura
-
-| # | Módulo | Foco | Horas |
-|---|---|---|---|
-| 1 | O desync como consequência | O modelo, e o que ele é | 2 |
-| 2 | O protocolo e as camadas | HTTP/1.1, proxies, e o que cada um faz | 3 |
-| 3 | TE / CL — as combinações | ⚠ **O núcleo** | 4 |
-| 4 | Outras variantes de H1 | Espaços, duplicatas, chunk | 3 |
-| 5 | O lab e o harness de desync | Medir, não afirmar | 3 |
-| 6 | ⚠ **HTTP/2 e o descenso** | H2→H1, a conversão | 4 |
-| 7 | Client-side desync | O navegador no meio | 3 |
-| 8 | Desync de cache | Quando o cache é a camada | 3 |
-| 9 | Encontrar a variante | O padrão, sistematicamente | 3 |
-| 10 | Detecção e defesa | ⚠ **Como o mantenedor vê** | 2 |
-| 11 | Projeto: do desync ao reporte | O entregável | 2 |
-
-Cada módulo: teoria → **variante comentada** → lab → avaliação. ~55% prática de medição.
-
----
 
 ## O laboratório
 
@@ -171,22 +93,6 @@ mkdir -p ~/smuggle-lab/{frontends,backends,harness,evidencia,caderno} && cd ~/sm
 ⚠ **`frontends/` guarda as configs dos proxies.** **`backends/` guarda os servidores.** **E o
 isolamento é o do curso anterior:** **tudo em 127.0.0.1, e o teste de saída que FALHA.**
 
----
-
-## Critérios de avaliação
-
-| Instrumento | Peso | O que mede |
-|---|---|---|
-| Labs por módulo (11) | 45% | O desync medido, com evidência |
-| **As variantes** (módulos 3 e 4) | 20% | Quantas você reproduziu |
-| **O harness** (módulo 5) | 10% | Mede sem afirmar |
-| O descenso H2 (módulo 6) | 10% | A variante mais moderna |
-| Projeto (módulo 11) | 15% | Do desync ao reporte |
-
-**Rubrica central:** você não entrega "há um smuggling aqui". Você entrega **a variante
-identificada**, **o desync medido**, **a evidência literal** — e **a quem reportar**.
-
----
 
 ## Como este curso se conecta
 
@@ -201,22 +107,6 @@ identificada**, **o desync medido**, **a evidência literal** — e **a quem rep
 ⚠ **Este curso é o módulo 6 do Parser Differentials levado ao osso.** **E ele alimenta o de Detecção
 e Evasão** — **porque o defensor precisa reconhecer o que o atacante mede.**
 
----
-
-## Referências abertas
-
-- **HTTP Desync Attacks: Request Smuggling Reborn** — PortSwigger, 2019
-- **HTTP/2: The Sequel is Always Worse** — PortSwigger, 2021
-- **Browser-Powered Desync Attacks** — PortSwigger, 2022
-- **HTTP/1.1 Must Die: The Smuggler's Guide** — 2025
-- **Client-Side Desync** — PortSwigger Research
-- **RFC 9112 §6.3** — parsing de mensagem
-- **RFC 7230 §3.3.3** — a precedência de TE/CL
-- **`smuggler`** — https://github.com/defparam/smuggler
-- **HTTP Garden** — https://github.com/narfindustries/http-garden
-- **CVE-2024-38475, CVE-2025-... (Pingora)** — variantes em produtos novos
-
----
 
 *Material didático original, de propósito defensivo e de pesquisa. Duas camadas ou mais, sempre no
 laboratório próprio, ou com autorização escrita. Nenhum payload é enviado a serviço de terceiro. O

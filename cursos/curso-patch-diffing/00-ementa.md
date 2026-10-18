@@ -1,32 +1,14 @@
 ---
-title: Analise Diferencial de Patch: Do Diff ao Achado
+title: "Analise Diferencial de Patch: Do Diff ao Achado"
+nivel: especialista
+tags: [patch, diff, binario, 1-day, variant, ghidra]
+---title: Analise Diferencial de Patch: Do Diff ao Achado
 nivel: especialista
 tags: [patch, diff, binario, 1-day, variant, ghidra]
 ---# Análise Diferencial de Patch: Do Diff ao Achado
 
 **Ementa do curso · 32 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 
----
-
-## Progressão — o que você sabe antes e depois
-
-| | No módulo 1 | No último módulo |
-|---|---|---|
-| **Diff** | Usa `git diff` | Lê **binário** sem fonte, e acha o que mudou |
-| **Patch** | Vê o que mudou | **Infere o invariante** e o padrão |
-| **Ruído** | Não sabe separar | Reconhece **sinal de ruído** por fluxo de controle |
-| **CVE** | Lê o resumo | **Reproduz o bug** a partir do diff |
-| **Ferramenta** | Não conhece nenhuma | `Ghidra`, `BinDiff`, `Ghidriff`, `DiffRays` |
-| **Variant** | Procura no mesmo arquivo | Procura no **ecossistema**, e acha 0-day |
-| **Timing** | Analisa o patch depois | Analisa **no dia da divulgação**, com método |
-| **Resultado** | "o patch corrige X" | **O 1-day reproduzido, ou o 0-day** |
-
-**Pré-requisito duro:** curso de **Pesquisa em Segurança** (módulos 3, 4 e 7) · curso de **Assembly
-e RE** · curso de **Exploit Development** (para entender a primitiva).
-
-⚠ **Sem o de Pesquisa, você não tem o método.** **Sem o de Assembly, você não lê o diff de binário.**
-
----
 
 ## Por que este curso existe
 
@@ -61,35 +43,6 @@ reproduzível.** **Você não precisa de sorte; precisa de método.**
 ⚠ **E o rendimento é conhecido:** o `EnBinDiff` achou **20 1-days reais** com a técnica.
 **O caminho existe, e está medido.**
 
----
-
-## ⚠ Nota de propósito e conduta
-
-⚠ **Este curso é o mais próximo de "produzir arma" do material** — porque **a saída dele é um
-1-day funcional.** E **um 1-day é utilizável contra qualquer sistema não corrigido.**
-
-| Este curso faz | **Não** faz |
-|---|---|
-| Diff de **binário público** | Diff de binário de cliente sem autorização |
-| Reprodução em **alvo próprio ou CTF** | Reprodução em sistema de terceiro |
-| **Reporta** o achado ao mantenedor | Publica antes da correção |
-| Caça silent patch em **projeto aberto** | Testa instância em produção |
-| Escreve o 1-day para **entender** | Usa o 1-day contra alguém |
-| Fuzzing dirigido no **seu lab** | Fuzzing contra serviço alheio |
-
-⚠ **A regra que vale o curso inteiro:**
-
-> **Você baixa o binário público, diffa na sua máquina, e reproduz no SEU alvo.** **O achado vai
-> para o mantenedor — não para o sistema de ninguém.**
-
-⚠ **E a linha temporal importa.** **Analisar um patch no dia da divulgação é método legítimo** —
-**é o que faz a defesa.** **Usar o 1-day para atacar antes de a correção ser aplicada é o crime.**
-**A técnica é a mesma; o que muda é onde ela vai.**
-
-⚠ **No Brasil:** art. 154-A (acesso indevido) e art. 266 (interrupção). **Exploit funcional contra
-alvo real é crime consumado** — a execução já é o acesso.
-
----
 
 ## Objetivos de aprendizagem
 
@@ -106,27 +59,6 @@ Ao final, você será capaz de:
 9. Usar **fuzzing dirigido** pela posição do patch.
 10. Reportar o achado **sem publicar antes da correção**.
 
----
-
-## Estrutura
-
-| # | Módulo | Foco | Horas |
-|---|---|---|---|
-| 1 | Por que o diff é a fonte mais honesta | O método, e o que se ganha | 2 |
-| 2 | O ambiente, e a proveniência do build | O que torna o diff legível | 3 |
-| 3 | Diff de fonte | `git diff`, três níveis, invariante | 3 |
-| 4 | Diff de binário — manual | `Ghidra`, Version Tracking, leitura | 4 |
-| 5 | Sinal e ruído | Separar o que importa quando tem 400 funções | 3 |
-| 6 | As ferramentas — `BinDiff`, `Ghidriff`, `DiffRays` | Automatizar sem perder o entendimento | 3 |
-| 7 | Localizar o código do patch | `PLocator`, e o critério de localização | 3 |
-| 8 | Reproduzir o 1-day | Do diff ao PoC, em alvo próprio | 4 |
-| 9 | Silent patch | Caça sistemática, sem CVE como guia | 3 |
-| 10 | Variante por ecossistema | De 1-day a 0-day | 2 |
-| 11 | Projeto: do CVE ao achado | O entregável completo | 2 |
-
-Cada módulo: teoria → **diff comentado** → lab → avaliação. ~65% prática de leitura.
-
----
 
 ## O laboratório
 
@@ -158,22 +90,6 @@ mkdir -p ~/patch-lab/{alvos,diffs,ferramentas,caderno} && cd ~/patch-lab
 ⚠ **A pasta `alvos/` guarda os pares de binários** — versão N-1 e N, **do mesmo fornecedor**.
 **É a proveniência que o módulo 2 exige.**
 
----
-
-## Critérios de avaliação
-
-| Instrumento | Peso | O que mede |
-|---|---|---|
-| Labs por módulo (11) | 50% | Diff lido, achado localizado, evidência |
-| Sinal vs. ruído (módulo 5) | 15% | Separação com critério explícito |
-| Localização do patch (módulo 7) | 10% | O critério, não a ferramenta |
-| Reprodução (módulo 8) | 10% | 1-day reproduzido em alvo próprio |
-| Projeto (módulo 11) | 15% | Do CVE ao achado, com caderno |
-
-**Rubrica central:** você não entrega "diffei os binários". Você entrega **o invariante**, **o
-código do patch localizado**, **a evidência** — e **o que isso destrava**.
-
----
 
 ## Como este curso se conecta
 
@@ -189,24 +105,6 @@ código do patch localizado**, **a evidência** — e **o que isso destrava**.
 ⚠ **Este curso é o módulo 3 do Pesquisa, levado ao osso.** E ele **alimenta o Exploit** — porque
 **um 1-day reproduzido é material de exploit.**
 
----
-
-## Referências abertas
-
-- **Patch Diffing In The Dark** — https://github.com/VulnerabilityResearchCentre/patch-diffing-in-the-dark
-- **DiffRays** — https://github.com/pwnfuzz/diffrays
-- **Ghidriff** — https://github.com/clearbluejar/ghidriff
-- **BinDiff** — https://github.com/google/bindiff
-- **Diaphora** — https://github.com/joxeankoret/diaphora
-- **PLocator** — https://arxiv.org/html/2501.17413v1
-- **EnBinDiff** — IEEE TQ 2023
-- **1dFuzz** — https://dl.acm.org/doi/10.1145/3597926.3598102
-- **"Introduction to Binary Diffing"** — Orange Cyberdefense, parte 1 e 2
-- **7 Free and Open Source Tools for Binary Diffing** — Packetlabs, 2025
-- **Microsoft Patch Tuesday** — a fonte mensal de pares de binários
-- **Project Zero** — o padrão de root cause analysis
-
----
 
 *Material didático original, de propósito defensivo e de pesquisa. Diff de binário público, e
 reprodução apenas em alvo próprio, CTF publicado, ou com autorização escrita. O achado é reportado

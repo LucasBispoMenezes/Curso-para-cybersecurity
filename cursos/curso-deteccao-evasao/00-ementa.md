@@ -1,31 +1,14 @@
 ---
-title: Deteccao e Evasao: O Jogo
+title: "Deteccao e Evasao: O Jogo"
+nivel: especialista
+tags: [deteccao, evasao, waf, sigma, falso-positivo, telemetria]
+---title: Deteccao e Evasao: O Jogo
 nivel: especialista
 tags: [deteccao, evasao, waf, sigma, falso-positivo, telemetria]
 ---# Detecção e Evasão: O Jogo
 
 **Ementa do curso · 34 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 
----
-
-## Progressão — o que você sabe antes e depois
-
-| | No módulo 1 | No último módulo |
-|---|---|---|
-| **Detecção** | Vê um alerta | ⚠ **Sabe o que o alerta custa** |
-| **Assinatura** | Escreve um regex | ⚠ **Sabe onde ela falha** |
-| **Evasão** | "codifica o payload" | ⚠ **Entende o que o parser vê** |
-| **Telemetria** | Liga o log | ⚠ **Modela o que falta** |
-| **Falso positivo** | Reclama | ⚠ **Mede e orça** |
-| **Atacante** | Imagina | ⚠ **Perfil com hipótese** |
-| **Resultado** | "bloqueei" | ⚠ **Detecção com taxa medida** |
-
-**Pré-requisito duro:** curso de **Pesquisa em Segurança** (módulos 5 e 6) · curso de **Parser
-Differentials** (módulo 3) · ter feito **qualquer** dos cursos ofensivos.
-
-⚠ **Sem o de Pesquisa, você não tem o critério.** **Sem ter atacado, você não sabe o que detecta.**
-
----
 
 ## Por que este curso existe
 
@@ -58,44 +41,6 @@ falha por arquitetura** — **e agora vai ver **por que**, do lado de dentro.**
 ⚠ **A tese, reescrita:** **não é que o WAF seja ruim.** **É que ele compara **uma** forma e o backend
 **processa outra** — **e nenhuma regra corrige isso.**
 
----
-
-## ⚠ Nota de propósito e conduta
-
-⚠ **Este curso é o mais defensivo da trilha — e ainda assim tem uma linha.**
-
-| Este curso faz | **Não** faz |
-|---|---|
-| Regras no **seu** lab | ⚠ Testar WAF de terceiro |
-| Mede a própria taxa de FP | Publica o bypass de produto vivo |
-| **Testa a regra contra o próprio ataque** | ⚠ Treina evasion para atacar |
-| **Reporta** a falha de detecção | ⚠ Vende a evasão |
-| Sobe o atacante no lab | ⚠ Aponta o atacante para fora |
-
-⚠ **A regra que vale o curso inteiro:**
-
-> **O atacante é simulado no SEU lab.** **A regra roda no SEU SIEM.** **E a falha que você encontrar
-> vai ao mantenedor do produto — não a um fórum.**
-
-⚠ **E a tentação específica deste curso:** **ele ensina evasão.** **E evasão é dual-use** — **as
-mesmas técnicas servem para atacar.** **A linha é o destino:** **você as escreve para medir a
-detecção, e as declara como tal.**
-
-⚠ **A tabela do que é lícito e o que não é:**
-
-| Ato | Lícito? |
-|---|---|
-| Escrever a regra e medir o FP | ✓ |
-| Rodar o atacante simulado no seu lab | ✓ |
-| Medir a taxa de detecção | ✓ |
-| Escrever a evasão para testar a regra | ✓ |
-| ⚠ Usar a evasão contra alvo real | ⚠ **CRIME** |
-| ⚠ Testar a regra contra WAF de terceiro | ⚠ **CRIME** |
-| ⚠ Publicar bypass de produto não corrigido | ⚠ Irresponsável |
-
-⚠ **No Brasil:** art. 154-A e 266. **E a evasão, quando usada, é o meio — não atenua a pena.**
-
----
 
 ## Objetivos de aprendizagem
 
@@ -112,27 +57,6 @@ Ao final, você será capaz de:
 9. **Orçar** uma regra — o que ela custa em FP e em manutenção.
 10. Reportar a falha de detecção **com evidência e sem expor terceiros**.
 
----
-
-## Estrutura
-
-| # | Módulo | Foco | Horas |
-|---|---|---|---|
-| 1 | O jogo | O modelo, e quem vê o quê | 2 |
-| 2 | A superfície de detecção | ⚠ **Onde se pode ver** | 3 |
-| 3 | Assinatura, comportamento, anomalia | ⚠ **As três famílias** | 4 |
-| 4 | A normalização e o elo fraco | ⚠ **Onde tudo falha** | 4 |
-| 5 | Telemetria e o que falta | O que logar — e o custo | 3 |
-| 6 | Falso positivo e o orçamento | ⚠ **Medir, não reclamar** | 3 |
-| 7 | O perfil do atacante | Do TTP à hipótese | 3 |
-| 8 | O ciclo purple | ⚠ **A regra que apodrece** | 4 |
-| 9 | Evasão: as famílias | O que cada uma explora | 4 |
-| 10 | O detector que discorda | O lado de dentro do módulo 10 anterior | 2 |
-| 11 | Projeto: a regra medida | O entregável | 2 |
-
-Cada módulo: teoria → **regra comentada** → lab → avaliação. ~55% prática de medição.
-
----
 
 ## O laboratório
 
@@ -164,22 +88,6 @@ mkdir -p ~/detect-lab/{regras,ataque,telemetria,medicoes,caderno} && cd ~/detect
 ⚠ **`regras/` guarda as assinaturas.** **`ataque/` guarda o atacante simulado — o do curso
 anterior.** **`medicoes/` guarda a taxa de acerto.** **E `caderno/` segue o módulo 3 do Pesquisa.**
 
----
-
-## Critérios de avaliação
-
-| Instrumento | Peso | O que mede |
-|---|---|---|
-| Labs por módulo (11) | 40% | A regra escrita **e medida** |
-| **Taxa de FP** (módulo 6) | 20% | ⚠ **Medida, não estimada** |
-| **As três famílias** (módulo 3) | 10% | Sabe quando usar cada uma |
-| **O ciclo purple** (módulo 8) | 15% | Atacou, detectou, ajustou |
-| Projeto (módulo 11) | 15% | A regra, com taxa e limitações |
-
-**Rubrica central:** você não entrega "escrevi uma regra". Você entrega **a regra**, **a taxa de
-detecção**, **a taxa de falso positivo** — e **o que ela não pega**.
-
----
 
 ## Como este curso se conecta
 
@@ -195,22 +103,6 @@ detecção**, **a taxa de falso positivo** — e **o que ela não pega**.
 ⚠ **Este curso fecha o eixo defensivo.** **E ele se lê melhor depois do HTTP Smuggling** — **porque
 o módulo 10 de lá já apresentou as defesas, e aqui você as mede.**
 
----
-
-## Referências abertas
-
-- **MITRE ATT&CK** — https://attack.mitre.org/
-- **Sigma** — https://github.com/SigmaHQ/sigma
-- **Suricata** — https://suricata.io/
-- **Zeek** — https://zeek.org/
-- **OWASP CRS** — https://coreruleset.org/
-- **WAFFLED** — a pesquisa sobre divergência em WAFs
-- **Detection Engineering (práticas)** — a disciplina
-- **Purple Team** — o ciclo
-- **RFC 9110 / 9112** — a spec que o detector lê
-- **"=" False Positive" (Google SRE)** — sobre o custo de alertar
-
----
 
 *Material didático original, de propósito defensivo e de pesquisa. O atacante é simulado no
 laboratório próprio, e a regra roda no sensor próprio. Nenhum teste contra SIEM, WAF ou serviço de
