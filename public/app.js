@@ -8,8 +8,6 @@ let DATA = null;
 
 /* ============================================================
    SANITIZACAO
-   O HTML vem do Markdown, mas passa por innerHTML. Este filtro
-   remove o que pode executar script sem tocar no didatico.
    ============================================================ */
 const TAGS_PERIGOSAS =
   /<\s*\/?\s*(script|iframe|object|embed|form|input|button|link|meta|base|style|svg|math)\b[^>]*>/gi;
@@ -25,7 +23,6 @@ function sanitize(html) {
     .replace(/data:text\/html/gi, "");
 }
 
-/* Escapa texto que vai para dentro de HTML. */
 const esc = (s) =>
   String(s)
     .replace(/&/g, "&amp;")
@@ -91,14 +88,12 @@ async function load() {
 }
 
 /* ============================================================
-   BARRA DE LEITURA
-   Um unico listener, guardado em referencia estavel. Chamadas
-   repetidas trocam a funcao — nunca empilham.
+   BARRA DE LEITURA — um unico listener, referencia estavel
    ============================================================ */
 let onScrollAtual = null;
 
 function trackReading() {
-  const artigo =
+  const alvo =
     document.querySelector("article") || document.querySelector(".ap-conteudo");
 
   if (onScrollAtual) {
@@ -106,14 +101,14 @@ function trackReading() {
     onScrollAtual = null;
   }
 
-  if (!artigo) {
+  if (!alvo) {
     readbar.style.width = "0%";
     return;
   }
 
   onScrollAtual = () => {
-    const top = artigo.getBoundingClientRect().top + window.scrollY;
-    const altura = artigo.offsetHeight;
+    const top = alvo.getBoundingClientRect().top + window.scrollY;
+    const altura = alvo.offsetHeight;
     if (altura <= 0) return;
     const visto = window.scrollY + window.innerHeight - top;
     const ratio = Math.min(1, Math.max(0, visto / altura));
@@ -122,6 +117,67 @@ function trackReading() {
 
   window.addEventListener("scroll", onScrollAtual, { passive: true });
   onScrollAtual();
+}
+
+/* ============================================================
+   PEDACOS REUTILIZAVEIS
+   ============================================================ */
+const seloNivel = (curso) =>
+  curso.nivel
+    ? '<span class="selo selo-' + curso.nivel + '">' + esc(curso.nivelNome) + "</span>"
+    : "";
+
+const pilulasTags = (curso) =>
+  curso.tags && curso.tags.length
+    ? '<div class="tags">' +
+    curso.tags.map((t) => '<span class="tag">' + esc(t) + "</span>").join("") +
+    "</div>"
+    : "";
+
+function cardCurso(c) {
+  const p = pct(c);
+  return (
+    '<a class="card" href="#/apresentacao/' + c.slug + '">' +
+    '<div class="card-cover">' +
+    (c.cover
+      ? '<img src="' + esc(c.cover) + '" alt="" loading="lazy" />'
+      : '<div class="cover-fallback">' + ICO.layers + "</div>") +
+    seloNivel(c) +
+    (p > 0 ? '<span class="badge-done">' + p + "%</span>" : "") +
+    "</div>" +
+    '<div class="card-body">' +
+    "<h2>" + esc(c.title) + "</h2>" +
+    "<p>" + esc(c.description || "Sem descricao.") + "</p>" +
+    '<div class="card-meta">' +
+    "<span>" + ICO.book + c.aulas.length + "</span>" +
+    "<span>" + ICO.clock + c.hours + "h</span>" +
+    "</div>" +
+    '<div class="bar"><div class="bar-fill" style="width:' + p + '%"></div></div>' +
+    "</div>" +
+    "</a>"
+  );
+}
+
+function blocoNivel(n) {
+  return (
+    '<section class="nivel-bloco">' +
+    '<div class="nivel-head">' +
+    '<div class="nivel-titulo">' +
+    '<span class="selo selo-' + n.slug + '">' + esc(n.nome) + "</span>" +
+    "<h2>" + esc(n.nome) + "</h2>" +
+    '<span class="meta-mono">' +
+    n.total + " trilhas &middot; " + n.horas + "h</span>" +
+    "</div>" +
+    "</div>" +
+    '<div class="grid">' +
+    n.cursos
+      .map((s) => DATA.cursos.find((c) => c.slug === s))
+      .filter(Boolean)
+      .map(cardCurso)
+      .join("") +
+    "</div>" +
+    "</section>"
+  );
 }
 
 /* ============================================================
@@ -142,7 +198,7 @@ function route() {
 }
 
 /* ============================================================
-   HOME
+   HOME — agrupada por nivel
    ============================================================ */
 async function renderHome() {
   let data;
@@ -164,7 +220,8 @@ async function renderHome() {
   }
 
   const iniciados = data.cursos.filter((c) => pct(c) > 0).length;
-  const totalHoras = data.cursos.reduce((n, c) => n + c.hours, 0);
+  const semNivelLista = data.cursos.filter((c) => !c.nivel);
+  const niveis = data.niveis || [];
 
   app.className = "home";
   app.innerHTML =
@@ -178,43 +235,31 @@ async function renderHome() {
     '<div class="home-stats">' +
     '<div class="stat"><b>' + data.totalCursos + "</b><span>Trilhas</span></div>" +
     '<div class="stat"><b>' + data.totalAulas + "</b><span>Aulas</span></div>" +
-    '<div class="stat"><b>' + totalHoras + "h</b><span>Estudo</span></div>" +
+    '<div class="stat"><b>' + data.totalHoras + "h</b><span>Estudo</span></div>" +
     '<div class="stat"><b>' + iniciados + "</b><span>Em curso</span></div>" +
     "</div>" +
     "</section>" +
-    '<div class="home-bar">' +
-    "<h2>Biblioteca</h2>" +
-    (iniciados
-      ? '<span class="meta-mono">' + iniciados + " em andamento</span>"
-      : '<span class="meta-mono">comece por onde quiser</span>') +
-    "</div>" +
-    '<div class="grid">' +
-    data.cursos
-      .map((c) => {
-        const p = pct(c);
-        return (
-          '<a class="card" href="#/apresentacao/' + c.slug + '">' +
-          '<div class="card-cover">' +
-          (c.cover
-            ? '<img src="' + esc(c.cover) + '" alt="" loading="lazy" />'
-            : '<div class="cover-fallback">' + ICO.layers + "</div>") +
-          (p > 0 ? '<span class="badge-done">' + p + "%</span>" : "") +
-          "</div>" +
-          '<div class="card-body">' +
-          "<h2>" + esc(c.title) + "</h2>" +
-          "<p>" + esc(c.description || "Sem descricao.") + "</p>" +
-          '<div class="card-meta">' +
-          "<span>" + ICO.book + c.aulas.length + "</span>" +
-          "<span>" + ICO.clock + c.hours + "h</span>" +
-          (c.minutes ? "<span>" + c.minutes + " min</span>" : "") +
-          "</div>" +
-          '<div class="bar"><div class="bar-fill" style="width:' + p + '%"></div></div>' +
-          "</div>" +
-          "</a>"
-        );
-      })
+    niveis
+      .filter((n) => n.total > 0)
+      .map(blocoNivel)
       .join("") +
-    "</div>";
+    (semNivelLista.length
+      ? '<section class="nivel-bloco">' +
+      '<div class="nivel-head">' +
+      '<div class="nivel-titulo">' +
+      "<h2>Outras trilhas</h2>" +
+      '<span class="meta-mono">' +
+      semNivelLista.length +
+      " sem nivel definido</span>" +
+      "</div>" +
+      "</div>" +
+      '<div class="grid">' +
+      semNivelLista.map(cardCurso).join("") +
+      "</div>" +
+      "</section>"
+      : "");
+
+  window.scrollTo({ top: 0 });
 }
 
 /* ============================================================
@@ -247,6 +292,13 @@ async function renderSobre() {
     "</div>" +
     "</section>" +
     '<div class="ap-conteudo" style="margin-top:2.5rem;max-width:76ch">' +
+    "<h2>Os quatro niveis</h2>" +
+    "<ul>" +
+    "<li><strong>Básico</strong> &mdash; sem pre-requisito tecnico. Ponto de partida.</li>" +
+    "<li><strong>Intermediário</strong> &mdash; exige base de programacao ou de sistema.</li>" +
+    "<li><strong>Avançado</strong> &mdash; exige dois ou tres cursos do material.</li>" +
+    "<li><strong>Especialista</strong> &mdash; encadeia os anteriores em sequencia.</li>" +
+    "</ul>" +
     "<h2>O que voce encontra em cada modulo</h2>" +
     "<ul>" +
     "<li><strong>Teoria</strong> &mdash; o conceito no menor numero de palavras possivel.</li>" +
@@ -255,13 +307,10 @@ async function renderSobre() {
     "<li><strong>Avaliacao</strong> &mdash; criterio explicito do que conta como feito.</li>" +
     "</ul>" +
     "<h2>Principios</h2>" +
-    "<blockquote><p>Funcionou <strong>neste</strong> caso. A pergunta e sempre por que &mdash; " +
+    '<blockquote><p>Funcionou <strong>neste</strong> caso. A pergunta e sempre por que &mdash; ' +
     "e o que mudaria se a entrada fosse outra.</p></blockquote>" +
     "<p>Todo alvo e seu, na sua maquina. O bug e provocado no codigo que voce escreveu, " +
     "para que voce entenda o mecanismo antes de reconhecer o sintoma.</p>" +
-    "<h2>Como navegar</h2>" +
-    "<p>A biblioteca abre na apresentacao de cada trilha. Leia a ementa, veja os requisitos " +
-    "e so entao clique em iniciar. O progresso fica salvo no seu navegador.</p>" +
     "</div>";
 
   window.scrollTo({ top: 0 });
@@ -302,7 +351,7 @@ async function renderIndice(slug) {
 }
 
 /* ============================================================
-   APRESENTACAO
+   APRESENTACAO — selo + tags
    ============================================================ */
 async function renderApresentacao(slug) {
   let data;
@@ -329,7 +378,9 @@ async function renderApresentacao(slug) {
     '<div class="ap-hero-veu"></div>' +
     '<div class="ap-hero-txt">' +
     '<a class="ap-voltar" href="#/">' + ICO.back + " Biblioteca</a>" +
+    '<div class="ap-selo">' + seloNivel(curso) + "</div>" +
     "<h1>" + esc(curso.title) + "</h1>" +
+    pilulasTags(curso) +
     '<div class="ap-meta">' +
     "<span>" + ICO.book + curso.aulas.length + " aulas</span>" +
     "<span>" + ICO.clock + curso.hours + "h</span>" +
