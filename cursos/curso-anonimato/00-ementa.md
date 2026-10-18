@@ -2,6 +2,7 @@
 title: "Anonimato e Privacidade na Internet: Tor, Proxies e o que Realmente Protege"
 nivel: basico
 tags: [anonimato, tor, vpn, opsec, fingerprint, trafego]
+---
 
 ## Sobre o que é este curso — leia primeiro
 
