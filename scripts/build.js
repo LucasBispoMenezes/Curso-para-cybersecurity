@@ -60,11 +60,46 @@ const slugify = (s) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-// Le o primeiro titulo de nivel 1 do corpo do Markdown.
-// Usado quando a ementa nao declara "title:" no front matter.
+// Cabecalhos estruturais que nao servem como titulo do curso.
+const TITULO_GENERICO =
+  /^(ementa|index|indice|sumario|conteudo|conteúdo|sobre|introducao|introdução|apresentacao|apresentação|curso|descricao|descrição|readme)$/i;
+
+/* Le o primeiro titulo de nivel 1 do corpo que NAO seja cabecalho generico. */
 const titleFrom = (content, fallback) => {
-  const m = String(content).match(/^[ \t]*#[ \t]+(.+?)[ \t]*$/m);
-  return m ? m[1].replace(/[*_`]/g, "").trim() : fallback;
+  for (const l of String(content).split("\n")) {
+    const m = l.match(/^[ \t]*#[ \t]+(.+?)[ \t]*$/);
+    if (!m) continue;
+    const t = m[1].replace(/[*_`]/g, "").trim();
+    if (TITULO_GENERICO.test(t)) continue;
+    return t;
+  }
+  return fallback;
+};
+
+/* Primeiro paragrafo util como descricao, sem marcadores de Markdown. */
+const excerptFrom = (content, data) => {
+  if (data.description) return data.description;
+
+  const linhas = String(content)
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("#") && !l.startsWith(">") && !l.startsWith("|"))
+    .filter((l) => !/^\*\*\s*$/.test(l))
+    .filter((l) => !/^[-*_]{3,}$/.test(l));
+
+  for (const l of linhas) {
+    const limpo = l
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/`(.+?)`/g, "$1")
+      .replace(/^[-*+]\s+/, "")
+      .replace(/\[(.+?)\]\(.+?\)/g, "$1")
+      .trim();
+
+    if (limpo.length < 15) continue;
+    return limpo.length > 200 ? limpo.slice(0, 197) + "..." : limpo;
+  }
+  return "";
 };
 
 function walk(dir) {
@@ -106,12 +141,10 @@ const IMG_RE = /\.(png|jpe?g|webp|gif|svg|avif)$/i;
 /* ============================================================
    IMAGENS DO CURSO
    Copia cursos/<curso>/img/** para public/cursos/<curso>/img/**
-   e escolhe uma capa automaticamente:
-     1. cover.* / capa.* / thumb.* / banner.*
-     2. a primeira imagem em ordem natural
-   O front matter "cover:" continua tendo prioridade sobre isso.
+   e escolhe a capa: cover.* / capa.* / thumb.* / banner.* e,
+   se nao houver nenhuma, a primeira imagem em ordem natural.
    ============================================================ */
-function copiarImagens(dirCurso, folder) {
+function copiarImagens(dirCurso, folder, problemas) {
   const origem = path.join(dirCurso, "img");
   if (!fs.existsSync(origem)) return null;
 
@@ -158,6 +191,23 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
   const dir = path.join(ROOT, entry.name);
   const arquivos = walk(dir);
 
+  /* ---------- apresentacao (README.md) ---------- */
+  const readme = path.join(dir, "README.md");
+  let apresentacaoHtml = "";
+  let temApresentacao = false;
+
+  if (fs.existsSync(readme)) {
+    const brutoAp = fs.readFileSync(readme, "utf8");
+    const { data: dataAp, content: contentAp } = matter(brutoAp);
+    try {
+      apresentacaoHtml = decorate(marked.parse(contentAp));
+      temApresentacao = true;
+    } catch (err) {
+      problemas.push(`${path.relative(ROOT, readme)}: ${err.message}`);
+    }
+  }
+
+  /* ---------- paginas (ementa + aulas) ---------- */
   const parsed = arquivos.map((file) => {
     const nome = path.basename(file, ".md");
     const bruto = fs.readFileSync(file, "utf8");
@@ -177,7 +227,6 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
       nome,
       rank,
       isIndex: rank === 0,
-      // Prioridade: front matter -> primeiro "# ..." do corpo -> nome do arquivo
       title:
         data.title ||
         titleFrom(content, limpo.replace(/[-_]/g, " ")) ||
@@ -186,13 +235,7 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
       slug: slugify(nome),
       html,
       minutes: readingTime(content),
-      excerpt:
-        data.description ||
-        content
-          .split("\n")
-          .map((l) => l.trim())
-          .find((l) => l && !l.startsWith("#") && !l.startsWith(">")) ||
-        "",
+      excerpt: excerptFrom(content, data),
     };
   });
 
@@ -207,13 +250,11 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
     );
 
   // Capa: front matter tem prioridade; senao, a pasta img/ do curso decide.
-  const capaAuto = copiarImagens(dir, entry.name);
+  const capaAuto = copiarImagens(dir, entry.name, problemas);
   if (capaAuto) imagensCopiadas++;
 
   const coverFile = index?.data?.cover;
-  const cover = coverFile
-    ? String(coverFile).replace(/^\.?\/?/, "")
-    : capaAuto;
+  const cover = coverFile ? String(coverFile).replace(/^\.?\/?/, "") : capaAuto;
 
   const minutos = aulas.reduce((n, a) => n + a.minutes, 0);
 
@@ -223,13 +264,15 @@ for (const entry of fs.readdirSync(ROOT, { withFileTypes: true })) {
     order: orderOf(entry.name),
     title:
       index?.title ||
-      titleFrom(index ? "" : "", entry.name.replace(/^\d+[-_]?/, "").replace(/[-_]/g, " ")),
+      entry.name.replace(/^\d+[-_]?/, "").replace(/[-_]/g, " "),
     description: index?.excerpt || "",
     cover,
     hours: Math.max(1, Math.round(minutos / 60)),
     minutes: minutos,
     html: index?.html || "",
     hasEmenta: Boolean(index),
+    temApresentacao,
+    apresentacaoHtml,
     aulas: aulas.map((a) => ({
       slug: a.slug,
       title: a.title,
@@ -268,6 +311,9 @@ console.log(`${cursos.length} curso(s) e ${totalAulas} aula(s) em ${OUT}/cursos.
 if (imagensCopiadas) {
   console.log(`${imagensCopiadas} curso(s) com pasta img/ copiada.`);
 }
+
+const comAp = cursos.filter((c) => c.temApresentacao).length;
+console.log(`${comAp} curso(s) com README de apresentacao.`);
 
 const semCapa = cursos.filter((c) => !c.cover).map((c) => c.folder);
 if (semCapa.length) {
