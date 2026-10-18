@@ -1,4 +1,8 @@
-# Linux para Segurança: O Sistema Como Superfície
+---
+title: Linux para Seguranca: O Sistema Como Superficie
+nivel: basico
+tags: [linux, proc, permissoes, namespace, setuid, capability]
+---# Linux para Segurança: O Sistema Como Superfície
 
 **Ementa do curso · 34 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 

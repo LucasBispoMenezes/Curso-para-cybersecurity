@@ -1,3 +1,8 @@
+---
+title: C para Pesquisa de Seguranca: Memoria, Bug e Comportamento Indefinido
+nivel: basico
+tags: [c, memoria, ub, sanitizer, ponteiro, corrupcao]
+---
 # C para Pesquisa de Segurança: Memória, Bug e Comportamento Indefinido
 
 **Ementa do curso · 32 horas · 11 módulos · PT-BR com termos técnicos em inglês**

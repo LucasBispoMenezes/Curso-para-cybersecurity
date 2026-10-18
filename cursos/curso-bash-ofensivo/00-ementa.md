@@ -1,3 +1,10 @@
+---
+title: Bash Ofensivo: Automação para Pentest
+nivel: basico
+tags: [bash, shell, automação, pentest, script]
+---
+
+
 # Bash Ofensivo: Automação para Pentest
 
 **Ementa do curso · 20 horas · 6 módulos · PT-BR com termos técnicos em inglês**

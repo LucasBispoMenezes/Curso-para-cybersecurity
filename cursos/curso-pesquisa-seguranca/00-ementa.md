@@ -1,4 +1,8 @@
-# Pesquisa em Segurança: O Método Antes da Técnica
+---
+title: Pesquisa em Seguranca: O Metodo Antes da Tecnica
+nivel: intermediario
+tags: [pesquisa, metodologia, cve, patch, hipotese, metodo]
+---# Pesquisa em Segurança: O Método Antes da Técnica
 
 **Ementa do curso · 30 horas · 12 módulos · PT-BR com termos técnicos em inglês**
 

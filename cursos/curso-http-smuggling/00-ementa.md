@@ -1,4 +1,8 @@
-# HTTP Smuggling e Confusão de Camada: O Framing Como Ataque
+---
+title: HTTP Smuggling e Confusao de Camada: O Framing Como Ataque
+nivel: especialista
+tags: [http, smuggling, framing, desync, http-2, proxy]
+---# HTTP Smuggling e Confusão de Camada: O Framing Como Ataque
 
 **Ementa do curso · 32 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 

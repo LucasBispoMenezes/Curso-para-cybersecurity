@@ -1,4 +1,8 @@
-# APT e Infraestrutura de C2: Análise Defensiva
+---
+title: APT e Infraestrutura de C2: Analise Defensiva
+nivel: especialista
+tags: [apt, c2, persistencia, infraestrutura, pivoting, deteccao]
+---# APT e Infraestrutura de C2: Análise Defensiva
 
 **Ementa do curso · 26 horas · 9 módulos · PT-BR com termos técnicos em inglês**
 

@@ -1,4 +1,8 @@
-# Detecção e Evasão: O Jogo
+---
+title: Deteccao e Evasao: O Jogo
+nivel: especialista
+tags: [deteccao, evasao, waf, sigma, falso-positivo, telemetria]
+---# Detecção e Evasão: O Jogo
 
 **Ementa do curso · 34 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 

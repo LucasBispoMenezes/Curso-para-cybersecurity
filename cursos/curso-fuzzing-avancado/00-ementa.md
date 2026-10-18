@@ -1,4 +1,8 @@
-# Fuzzing Avançado: Dirigido, Estrutural e Diferencial
+---
+title: Fuzzing Avancado: Dirigido, Estrutural e Diferencial
+nivel: especialista
+tags: [fuzzing, diferencial, corpus, gramatica, cobertura, triagem]
+---# Fuzzing Avançado: Dirigido, Estrutural e Diferencial
 
 **Ementa do curso · 36 horas · 12 módulos · PT-BR com termos técnicos em inglês**
 

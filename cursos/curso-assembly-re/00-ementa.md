@@ -1,3 +1,10 @@
+---
+title: Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
+nivel: basico
+tags: [assembly, x86-64, engenharia-reversa, ghidra, binário, disassembly]
+---
+
+
 # Assembly x86-64 e Engenharia Reversa: do Zero ao Avançado
 
 **Ementa do curso · 24 horas · 8 módulos · PT-BR com termos técnicos em inglês**

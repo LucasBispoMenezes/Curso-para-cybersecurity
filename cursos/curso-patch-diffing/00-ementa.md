@@ -1,4 +1,8 @@
-# Análise Diferencial de Patch: Do Diff ao Achado
+---
+title: Analise Diferencial de Patch: Do Diff ao Achado
+nivel: especialista
+tags: [patch, diff, binario, 1-day, variant, ghidra]
+---# Análise Diferencial de Patch: Do Diff ao Achado
 
 **Ementa do curso · 32 horas · 11 módulos · PT-BR com termos técnicos em inglês**
 
