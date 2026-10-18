@@ -1,4 +1,4 @@
-name: Deploy
+name: Publicar no GitHub Pages
 
 on:
   push:
@@ -7,6 +7,8 @@ on:
       - "cursos/**"
       - "public/**"
       - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
 
@@ -25,18 +27,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Instalar pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - run: npm ci
-      - run: npm run build
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
 
-      - name: Criar .nojekyll
+      - name: Gerar o site
+        run: pnpm run build
+
+      - name: Desativar Jekyll
         run: touch public/.nojekyll
 
       - uses: actions/configure-pages@v5
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
