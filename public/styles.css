@@ -1,0 +1,117 @@
+:root {
+  --bg: #0d1117;
+  --fg: #e6edf3;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --border: #30363d;
+  --panel: #161b22;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.7;
+}
+
+header {
+  position: sticky;
+  top: 0;
+  background: rgba(13, 17, 23, 0.9);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  padding: 0.9rem 1.5rem;
+  z-index: 10;
+}
+
+#logo { color: var(--fg); text-decoration: none; font-weight: 600; }
+
+main.home { max-width: 900px; margin: 3rem auto; padding: 0 1.5rem; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.card {
+  display: block;
+  padding: 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--fg);
+  transition: border-color 0.15s, transform 0.15s;
+}
+.card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.card h2 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+.card p { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.9rem; }
+.card span { color: var(--accent); font-size: 0.85rem; }
+
+main.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 2.5rem;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1.5rem;
+}
+
+aside { position: sticky; top: 4.5rem; align-self: start; max-height: calc(100vh - 6rem); overflow-y: auto; }
+aside h3 { margin: 0 0 1rem; font-size: 1rem; }
+
+aside nav { display: flex; flex-direction: column; gap: 0.15rem; }
+aside nav a {
+  color: var(--muted);
+  text-decoration: none;
+  padding: 0.45rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.92rem;
+}
+aside nav a:hover { background: var(--panel); color: var(--fg); }
+aside nav a.active { background: var(--panel); color: var(--accent); font-weight: 600; }
+
+article { min-width: 0; }
+article img { max-width: 100%; border-radius: 8px; }
+article pre {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  overflow-x: auto;
+}
+article code { font-family: ui-monospace, "Cascadia Code", monospace; font-size: 0.9em; }
+article :not(pre) > code {
+  background: var(--panel);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+}
+article a { color: var(--accent); }
+article table { border-collapse: collapse; width: 100%; }
+article th, article td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; }
+article blockquote {
+  margin: 1rem 0;
+  padding: 0.25rem 1rem;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+.pager {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+}
+.pager a { color: var(--accent); text-decoration: none; }
+
+@media (max-width: 780px) {
+  main.layout { grid-template-columns: 1fr; gap: 1.5rem; }
+  aside { position: static; max-height: none; }
+}
