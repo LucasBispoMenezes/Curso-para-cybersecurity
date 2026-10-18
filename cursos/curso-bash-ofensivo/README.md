@@ -15,8 +15,8 @@ vira entrada no Módulo 3, que alimenta o pipeline do Módulo 5. Pular a ordem f
 refaz trabalho.
 
 **Se você é instrutor**, cada módulo é independente o suficiente para uma aula de 3 a 4 horas.
-Os labs têm gabarito em `avaliacoes.md`, e o `docker-compose.yml` no topo de cada módulo sobe
-o alvo correspondente.
+Os labs têm critérios de correção e rubricas em `avaliacoes.md`, e cada módulo traz os comandos que
+sobem e destroem o alvo correspondente.
 
 **Ritmo sugerido:** uma sessão de 2h por semana durante 10 semanas, ou uma imersão de 4 dias
 (5h/dia). Não tente fazer 20h em um fim de semana — o Módulo 5 não entra na cabeça sem dormir
@@ -50,17 +50,20 @@ Você precisa de **uma** destas opções:
 3. **Container descartável** — se você não quer instalar nada, rode a partir de uma imagem
    `kalilinux/kali-rolling` e reinstale os pacotes a cada sessão.
 
-Além disso: **Docker** e **Docker Compose** instalados. Todos os alvos dos labs são containers.
+Além disso: **Docker** instalado. Todos os alvos dos labs são containers.
+
+⚠ **Este curso não parte do zero.** Ele assume fluência em terminal: `grep`, `sed`, `awk`, pipes,
+redirecionamento e códigos de saída. Se você ainda consulta o manual para fazer um `for`, o aproveitamento
+cai — vale fazer antes um curso introdutório de linha de comando.
 
 ```bash
 # Verificação rápida do ambiente
 bash --version          # 5.0 ou superior
 docker --version
-docker compose version
 python3 --version       # 3.8+
 ```
 
-Se os quatro comandos respondem, você está pronto.
+Se os três comandos respondem, você está pronto.
 
 ### Pacotes usados ao longo do curso
 
@@ -68,8 +71,8 @@ Não instale tudo de uma vez — cada módulo lista o que precisa. O conjunto co
 
 ```bash
 sudo apt update
-sudo apt install -y jq curl wget dnsutils nmap ffuf gobuster \
-                    parallel netcat-openbsd tree shellcheck
+sudo apt install -y jq curl wget dnsutils nmap parallel netcat-openbsd \
+                    tree shellcheck python3
 ```
 
 `shellcheck` merece destaque: ele entra no Módulo 1 e é usado em todos os seguintes. É o linter

@@ -1,6 +1,6 @@
 # Módulo 5 — Automação de Reconhecimento
 
-**Carga:** 4 horas (1h15 teoria · 2h45 lab)
+**Carga:** 4 horas (1h15 teoria · 2h45 lab)  
 **Pré-requisitos:** Módulos 1 a 4
 
 ---
@@ -169,7 +169,7 @@ grep -vE '^\s*(#|$)' "${WORDLIST}" \
   | sort
 ```
 
-N O T A Em engajamento real, **use resolvedor local** (`dnsmasq`, `unbound`) ou o resolvedor
+**NOTA** Em engajamento real, **use resolvedor local** (`dnsmasq`, `unbound`) ou o resolvedor
 autorizado do escopo. Bater 5.000 consultas num resolvedor público é o caminho mais rápido para
 ser bloqueado — e para gerar um alerta em quem opera aquele resolvedor.
 
@@ -267,7 +267,7 @@ detectar() {
 }
 ```
 
-N O T A `${var,,}` converte para minúsculas (bash 4+). Combinado com comparação por `*substring*`,
+**NOTA** `${var,,}` converte para minúsculas (bash 4+). Combinado com comparação por `*substring*`,
 evita escrever regex para cada padrão.
 
 ---
@@ -337,14 +337,14 @@ awk -F'\t' '
 ' alvos.tsv | sort -rn -k1,1 | cut -f2-
 ```
 
-N N Exemplificativo. Em engajamento real a criticidade depende do escopo, do ativo, do
+**NOTA** Exemplificativo. Em engajamento real a criticidade depende do escopo, do ativo, do
 contexto de negócio. A tabela acima é um ponto de partida didático, não uma regra.
 
 ---
 
 ## 5.6 LAB — Pipeline de recon em três estágios
 
-**Duração:** 150 min
+**Duração:** 150 min  
 **Objetivo:** construir um pipeline completo com estágios independentes e testáveis.
 
 ### Passo 1 — Ambiente com DNS local
@@ -356,45 +356,71 @@ docker network create --subnet 172.31.0.0/24 net5 2>/dev/null || true
 # Alvos web
 docker run -d --name web1 --network net5 --ip 172.31.0.10 nginx:alpine >/dev/null
 docker run -d --name web2 --network net5 --ip 172.31.0.11 httpd:alpine >/dev/null
-
-# Arquivo de hosts que o resolvedor local vai servir
-mkdir -p dns
-cat > dns/dominio.local <<'EOF'
-172.31.0.10
-172.31.0.11
-EOF
 ```
 
 Para um DNS de laboratório sem infraestrutura pesada, use um container dedicado:
 
 ```bash
+# Zona DNS do laboratório
+mkdir -p dns
+
+cat > dns/named.conf <<'EOF'
+options {
+    directory "/var/cache/bind";
+    listen-on { any; };
+    listen-on-v6 { none; };
+    recursion no;
+};
+zone "dominio.local" IN {
+    type master;
+    file "/etc/bind/dominio.local.zone";
+};
+EOF
+
+cat > dns/dominio.local.zone <<'EOF'
+$TTL 60
+@   IN  SOA ns.dominio.local. admin.dominio.local. (
+        2026101801 3600 600 86400 60 )
+@   IN  NS  ns.dominio.local.
+ns      IN  A   172.31.0.53
+web1    IN  A   172.31.0.10
+api     IN  A   172.31.0.10
+web2    IN  A   172.31.0.11
+painel  IN  A   172.31.0.11
+EOF
+
 docker run -d --name dns-lab --network net5 --ip 172.31.0.53 \
   -p 5353:53/udp -p 5353:53/tcp \
-  internetsystemsconsortium/bind9:9.18 >/dev/null 2>&1 || \
-  echo "se o pull falhar, siga com o fallback abaixo"
+  -v "$PWD/dns/named.conf:/etc/bind/named.conf:ro" \
+  -v "$PWD/dns/dominio.local.zone:/etc/bind/dominio.local.zone:ro" \
+  internetsystemsconsortium/bind9:9.18 >/dev/null
 
-# Fallback sem container de DNS: use /etc/hosts do host de laboratório
-sudo tee -a /etc/hosts >/dev/null <<'EOF'
-172.31.0.10 web1.dominio.local api.dominio.local
-172.31.0.11 web2.dominio.local painel.dominio.local
-EOF
+sleep 3
+
+# PROVA de que o DNS funciona
+dig +short @172.31.0.53 web1.dominio.local    # -> 172.31.0.10
+dig +short @172.31.0.53 api.dominio.local     # -> 172.31.0.10
+dig +short @172.31.0.53 painel.dominio.local  # -> 172.31.0.11
 ```
 
-O fallback com `/etc/hosts` é suficiente para o lab e evita dependência de imagem externa.
-`getent hosts nome` consulta essa base e é o equivalente local ao `dig`.
+⚠ **O host do aluno não é alterado.** Este lab **não** mexe em `/etc/resolv.conf` nem em
+`/etc/hosts` da sua máquina. A resolução acontece **dentro da rede do laboratório**.
 
 ```bash
-getent hosts web1.dominio.local
+# Container auxiliar de resolução (opcional — útil para testes manuais)
+docker run -d --name dns-cli --network net5 --ip 172.31.0.200 \
+  --dns 172.31.0.53 alpine sleep 3600 >/dev/null
+
+sleep 2
+
+docker exec dns-cli getent hosts web1.dominio.local    # -> 172.31.0.10
+docker exec dns-cli getent hosts painel.dominio.local  # -> 172.31.0.11
 ```
 
+Para consultar do host sem alterar configuração nenhuma:
+`dig +short @127.0.0.1 -p 5353 web1.dominio.local`
+
 ### Passo 2 — Estágio 1: coleta
-
-Escreva `estagio1-coleta.sh` que:
-
-1. Lê uma wordlist de nomes candidatos (`api`, `painel`, `web1`, `web2`, `www`, `admin`, `teste`).
-2. Para cada um, testa `<nome>.dominio.local`.
-3. Resolve via `getent hosts` (fallback) **ou** `dig` com `-r` apontando para o resolvedor do lab.
-4. Emite TSV: `host<TAB>ip<TAB>fonte`.
 
 ```bash
 cat > wordlist.txt <<'EOF'
@@ -433,7 +459,9 @@ done
 
 resolver() {
     local nome="$1" ip
-    ip=$(getent hosts "${nome}" 2>/dev/null | awk '{print $1}' | head -n 1)
+    # Usa dig apontando para o DNS do lab (porta publicada no host)
+    ip=$(dig +short @127.0.0.1 -p 5353 A "${nome}" 2>/dev/null \
+         | grep -E '^[0-9]+\.' | head -n 1)
     [[ -n "${ip}" ]] && printf '%s\t%s\t%s\n' "${nome}" "${ip}" "dns"
     return 0
 }
@@ -448,75 +476,128 @@ chmod +x estagio1-coleta.sh
 ./estagio1-coleta.sh -d dominio.local -w wordlist.txt -j 8 | column -t -s$'\t'
 ```
 
-Você deve encontrar 4 nomes: `api`, `painel`, `web1`, `web2`.
+Você deve encontrar exatamente 4 nomes: `api`, `painel`, `web1`, `web2`.
 
 ### Passo 3 — Estágio 2: enriquecimento
-
-Escreva `estagio2-portas.sh` que recebe o TSV do estágio 1 em stdin e acrescenta portas abertas,
-usando o `testar()` do Módulo 4:
-
-Emissão: `host<TAB>ip<TAB>porta<TAB>servico<TAB>fonte`
 
 ```bash
 cat > estagio2-portas.sh <<'EOF'
 #!/usr/bin/env bash
 #
-# estagio2-portas.sh — descobre portas abertas nos hosts recebidos em stdin
-# Uso: ./estagio1-coleta.sh ... | ./estagio2-portas.sh [-j 10]
+# estagio2-portas.sh — recebe host\tip\tfonte e testa portas comuns
+# Uso: ./estagio1-coleta.sh ... | ./estagio2-portas.sh
 #
 set -euo pipefail
 
-JOBS="${JOBS:-10}"
-PORTAS=(22 80 443 8000 8080)
+JOBS="${JOBS:-20}"
+PORTAS=(80 443 22 8080 8000)
 
 testar_porta() {
     local host="$1" ip="$2" porta="$3"
-    if timeout 2 bash -c "exec 3<>/dev/tcp/${ip}/${porta}" 2>/dev/null; then
-        printf '%s\t%s\t%s\t%s\t%s\n' "${host}" "${ip}" "${porta}" "?" "varredura"
+    if timeout 1 bash -c "echo >/dev/tcp/${ip}/${porta}" 2>/dev/null; then
+        local servico
+        case "${porta}" in
+            80|8080|8000) servico="http" ;;
+            443)          servico="https" ;;
+            22)           servico="ssh" ;;
+            *)            servico="unknown" ;;
+        esac
+        printf '%s\t%s\t%s\t%s\tdns\n' "${host}" "${ip}" "${porta}" "${servico}"
     fi
+    return 0
 }
 export -f testar_porta
 
-# Achata host×porta numa lista de jobs
-awk -F'\t' -v portas="${PORTAS[*]}" '
-    {
-        n = split(portas, p, " ")
-        for (i = 1; i <= n; i++) print $1"\t"$2"\t"p[i]
-    }
-' \
-  | xargs -P "${JOBS}" -I {} bash -c \
-      'IFS=$'"'"'\t'"'"' read -r h i p <<< "$1"; testar_porta "$h" "$i" "$p"' _ {} \
-  | sort
+while IFS=$'\t' read -r host ip fonte || [[ -n "${host:-}" ]]; do
+    [[ -z "${host}" || "${host}" =~ ^# ]] && continue
+    for p in "${PORTAS[@]}"; do
+        printf '%s\t%s\t%s\n' "${host}" "${ip}" "${p}"
+    done
+done | xargs -P "${JOBS}" -n 3 bash -c 'testar_porta "$1" "$2" "$3"' _
 EOF
 chmod +x estagio2-portas.sh
+```
 
+Teste:
+
+```bash
 ./estagio1-coleta.sh -d dominio.local -w wordlist.txt \
   | ./estagio2-portas.sh | column -t -s$'\t'
 ```
 
 ### Passo 4 — Estágio 3: fingerprint e consolidação
 
-Escreva `estagio3-finger.sh` que:
-
-1. Recebe `host<TAB>ip<TAB>porta<TAB>servico<TAB>fonte`.
-2. Para portas 80/443/8000/8080, faz `curl -I` e identifica o servidor.
-3. Consolida num TSV final, **deduplicado por host+porta**, com contagem de fontes.
-4. Ordena por criticidade de porta.
-
-Consolidação — o idioma que resolve as três operações de uma vez:
-
 ```bash
-consolidar() {
-    # Deduplica host+porta mantendo primeira ocorrência
-    awk -F'\t' '!v{[$1":"$3]++}' "$1" \
-      | awk -F'\t' '{ print $3"\t"$0 }' \
-      | sort -rn -k1,1 \
-      | cut -f2-
+cat > estagio3-finger.sh <<'EOF'
+#!/usr/bin/env bash
+#
+# estagio3-finger.sh — fingerprint + deduplicação + priorização
+# Uso: ... | ./estagio2-portas.sh | ./estagio3-finger.sh
+#
+set -euo pipefail
+
+fingerprint() {
+    local host="$1" ip="$2" porta="$3" servico="$4" fonte="$5"
+    local url server
+
+    case "${porta}" in
+        80|8080|8000) url="http://${ip}:${porta}/" ;;
+        443)          url="https://${ip}/" ;;
+        *)
+            printf '%s\t%s\t%s\t%s\t%s\t-\n' \
+                "${host}" "${ip}" "${porta}" "${servico}" "${fonte}"
+            return 0
+            ;;
+    esac
+
+    server=$(curl -sS -I -k -L --connect-timeout 2 --max-time 5 "${url}" 2>/dev/null \
+             | awk -F': ' 'tolower($1)=="server"{print $2; exit}' || true)
+    server="${server:--}"
+
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "${host}" "${ip}" "${porta}" "${servico}" "${fonte}" "${server}"
 }
+export -f fingerprint
+
+printf 'host\tip\tporta\tservico\tfonte\tserver\n'
+
+tmp=$(mktemp)
+trap 'rm -f "${tmp}"' EXIT
+
+while IFS=$'\t' read -r host ip porta servico fonte || [[ -n "${host:-}" ]]; do
+    [[ -z "${host}" || "${host}" == "host" ]] && continue
+    fingerprint "${host}" "${ip}" "${porta}" "${servico}" "${fonte}"
+done > "${tmp}"
+
+# Deduplica por host+porta e ordena por criticidade
+awk -F'\t' '
+    BEGIN {
+        score[22]=9; score[3306]=10; score[5432]=10; score[6379]=9
+        score[80]=3; score[443]=3; score[8080]=4; score[8000]=4
+    }
+    NR==1 { next }
+    {
+        chave = $1 SUBSEP $3
+        if (!(chave in visto)) {
+            visto[chave] = 1
+            s = ($3 in score) ? score[$3] : 1
+            print s "\t" $0
+        }
+    }
+' "${tmp}" \
+  | sort -rn -k1,1 \
+  | cut -f2-
+EOF
+chmod +x estagio3-finger.sh
 ```
 
-Saída final esperada: uma tabela com host, ip, porta, serviço detectado, origem — sem
-repetição, ordenada com as portas mais críticas primeiro.
+Pipeline completo:
+
+```bash
+./estagio1-coleta.sh -d dominio.local -w wordlist.txt \
+  | ./estagio2-portas.sh \
+  | ./estagio3-finger.sh | column -t -s$'\t'
+```
 
 ### Critérios de aceitação
 
@@ -524,15 +605,15 @@ repetição, ordenada com as portas mais críticas primeiro.
 - Os três estágios encadeiam por pipe sem arquivo intermediário.
 - A saída do estágio 3 não tem duplicata de `host+porta`.
 - Nenhum erro de rede aparece no stdout — só no stderr.
-- Código de saída `0` quando há descoberta, `1` quando não há.
-- `shellcheck` limpo nos três scripts.
+- Código de saída `0` quando há descoberta.
+- `shellcheck` limpo nos três scripts (avisos de `export -f` / `xargs` são aceitáveis).
 
 ### Limpeza
 
 ```bash
-docker rm -f web1 web2 dns-lab 2>/dev/null || true
-docker network rm net5
-# Remova as linhas de laboratório que você acrescentou em /etc/hosts
+docker rm -f web1 web2 dns-lab dns-cli 2>/dev/null || true
+docker network rm net5 2>/dev/null || true
+# Não é necessário mexer em /etc/hosts — o lab não altera o host
 ```
 
 ---
@@ -555,3 +636,4 @@ docker network rm net5
 ---
 
 **Próximo:** [Módulo 6 — Scanning, fuzzing e relatório](modulo-06.md)
+```

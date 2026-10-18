@@ -72,31 +72,28 @@ SAIDA="${2:?informe o arquivo de saída}"
 command -v nmap >/dev/null 2>&1 || { echo "erro: nmap ausente" >&2; exit 3; }
 
 XML="$(mktemp)"
-trap 'rm -f "${XML}"' EXIT
+GREAM="$(mktemp)"
+trap 'rm -f "${XML}" "${GREAM}"' EXIT
 
 echo "varrendo ${ALVO}..." >&2
 
 # -oX: XML estruturado. Nunca deixe de usar.
 timeout 300 nmap -sV -T4 -oX "${XML}" "${ALVO}" >/dev/null 2>&1 || true
 
-# Extração com a ferramenta certa:
-# em ambiente sem python3, use grep -oP sobre o XML, aceitando a fragilidade
-printf 'porta\tprotocolo\testado\tservico\tproduto\tversao\n' > "${SAIDA}"
-
-grep -oP '<port protocol="\K[^"]+(?=" portid="\d+")' "${XML}" >/dev/null 2>&1 || true
-
-# Abordagem portável: `nmap` também aceita -oG (grepable), que é plano e estável
-GREAM="$(mktemp)"
-trap 'rm -f "${XML}" "${GREAM}"' EXIT
-
+# Formato grepable (-oG): plano e estável, sem precisar de runtime extra.
 timeout 300 nmap -sV -oG "${GREAM}" "${ALVO}" >/dev/null 2>&1 || true
+
+# Cabeçalho
+printf 'porta\tprotocolo\testado\tservico\tproduto\tversao\n' > "${SAIDA}"
 
 # Formato grepable:
 # Host: 127.0.0.1 ()  Ports: 22/open/tcp//ssh//OpenSSH 9.2p1/,80/open/tcp//http//nginx 1.24.0/
 awk '
 BEGIN { FS="\t"; OFS="\t" }
 /^Host:/ {
-    if (match($0, /Host: ([^ ]+)/, m)) host = m[1]
+    host = $0
+    sub(/^Host: /, "", host)
+    sub(/ .*/, "", host)
 }
 /Ports:/ {
     line = $0
@@ -104,7 +101,6 @@ BEGIN { FS="\t"; OFS="\t" }
     n = split(line, entradas, ", ")
     for (i = 1; i <= n; i++) {
         e = entradas[i]
-        # porta/estado/protocolo///servico//versao/
         split(e, c, "/")
         if (c[2] != "open") continue
         printf "%s\t%s\t%s\t%s\t%s\t%s\n", host, c[1], c[3], c[4], c[5], c[7]
@@ -301,7 +297,7 @@ Todos os testes foram conduzidos com autorização escrita, dentro da janela e d
 definidos. Os achados estão classificados por severidade e acompanhados de evidência
 reproduzível.
 
-**Total de achados:** $(($(wc -l < "${ACHADOS}") - 1))
+**Total de achados:** $(wc -l < "${ACHADOS}")
 
 ---
 
@@ -338,7 +334,7 @@ awk -F'\t' '{print}' "${ACHADOS}" | tail -n +2 | while IFS=$'\t' read -r status 
     n=$((n + 1))
     case "${status}" in
         401|403) sev="Média" ; desc="Recurso existente com acesso restrito — revisar necessidade de exposição" ;;
-        200|201|204) sev="Alta" ; desc="Recurso acessível publicamente — validar se é intencional" ;;
+        200|201|204) sev="Média" ; desc="Recurso acessível publicamente — validar se é intencional" ;;
         301|302|307) sev="Baixa" ; desc="Redirecionamento — verificar destino e cadeia" ;;
         *) sev="Informativa" ; desc="Comportamento distinto do baseline" ;;
     esac

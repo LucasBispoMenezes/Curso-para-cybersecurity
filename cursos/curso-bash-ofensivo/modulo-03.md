@@ -233,6 +233,11 @@ nem a variável. `set -u` tornaria isso um erro barulhento, que é o comportamen
 
 ### Solução 2 — processo agregador único
 
+N O T A O fechamento do bloco `{ ... }` **já espera os processos filhos** — o `wait` explícito aqui é
+redundante para o resultado. Ele está no exemplo para tornar a espera **visível** a quem lê, e porque
+em versões antigas de shell a garantia não era a mesma. Se você remover a linha, o comportamento
+observável não muda.
+
 Produtor gera, consumidor único escreve. Ordem garantida, arquivo único:
 
 ```bash

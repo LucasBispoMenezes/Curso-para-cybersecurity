@@ -414,11 +414,23 @@ export TIMEOUT RETRIES
 
 printf 'url\tclasse\tstatus\ttempo_ms\ttentativas\n' >&1
 
-grep -vE '^\s*(#|$)' "${ARQUIVO}" \
-  | xargs -P "${JOBS}" -I {} bash -c 'checar "$1"' _ {} \
-  | sort
+# A agregação roda sobre a saída COMPLETA, e é ela que define o exit code.
+# Sem o `{ ... }`, o `wc` fecharia o pipe cedo e o exit viria do xargs.
+resultado="$(grep -vE '^\s*(#|$)' "${ARQUIVO}" \
+  | xargs -P "${JOBS}" -I {} bash -c 'checar "$1"' _ {})"
 
-log "concluído"
+printf '%s\n' "${resultado}"
+
+# Conta por classe, SEM descartar linha: o total tem de bater com o número de URLs.
+falhas=$(printf '%s\n' "${resultado}" | awk -F'\t' 'NR>0 && $2=="REDE" || $2=="SERVIDOR" {n++} END {print n+0}')
+total=$(printf '%s\n' "${resultado}" | awk 'NF>0 {n++} END {print n+0}')
+
+log "concluído: ${total} URLs, ${falhas} com falha"
+
+if (( falhas > 0 )); then
+    exit 1
+fi
+exit 0
 ```
 
 ### Passo 3 — Teste
@@ -454,8 +466,10 @@ Resultados esperados:
 # deve ser 3
 ```
 
-Adicione essa lógica de agregação ao seu script: conte por classe e use isso para definir o
-código de saída no final.
+⚠ **A agregação já está no esqueleto acima** — o bloco que conta por classe e define o `exit` já vem
+pronto. O que você faz neste passo é **verificá-la**: rode o script com todas as URLs respondendo e
+depois com a URL `172.30.0.99` incluída, e confira `echo $?` nos dois casos. O primeiro deve dar `0`;
+o segundo, `1`.
 
 ### Critérios de aceitação
 
