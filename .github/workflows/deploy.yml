@@ -8,6 +8,7 @@ on:
       - "public/**"
       - "scripts/**"
       - "package.json"
+      - "package-lock.json"
       - "pnpm-lock.yaml"
       - ".github/workflows/deploy.yml"
   workflow_dispatch:
@@ -27,20 +28,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Instalar pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Instalar dependencias
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ -f pnpm-lock.yaml ]; then
+            corepack enable
+            pnpm install --frozen-lockfile
+          elif [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
       - name: Gerar o site
-        run: pnpm run build
+        run: |
+          if [ -f pnpm-lock.yaml ]; then corepack enable && pnpm run build; else npm run build; fi
 
       - name: Desativar Jekyll
         run: touch public/.nojekyll

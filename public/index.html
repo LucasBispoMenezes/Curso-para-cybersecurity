@@ -3,13 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meus Cursos</title>
+  <title>Cursos</title>
+  <meta name="description" content="Trilhas de estudo em Markdown, publicadas automaticamente no GitHub Pages." />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="[cdnjs.cloudflare.com](https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css)" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='[w3.org](http://www.w3.org/2000/svg)' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#128218;</text></svg>" />
 </head>
 <body>
+  <div class="progress-top"><div class="progress-top-bar" id="readbar"></div></div>
+
   <header>
-    <a href="#" id="logo">📚 Meus Cursos</a>
+    <a href="#/" id="logo">
+      <span class="logo-mark">&#128218;</span>
+      <span class="logo-text">Cursos</span>
+    </a>
+    <button id="menu-toggle" aria-label="Abrir menu">&#9776;</button>
   </header>
 
   <main id="app"></main>
