@@ -1,20 +1,26 @@
+// Obtém os elementos principais da interface usados pela aplicação.
 const app = document.getElementById("app");
 const menuToggle = document.getElementById("menu-toggle");
 const readbar = document.getElementById("readbar");
 
+// Chave que identifica o progresso salvo no armazenamento local.
 const STORE = "cursos-progresso";
 
+// Dados dos cursos carregados do arquivo JSON.
 let DATA = null;
 
 /* ---------- progresso ---------- */
 function getProgress() {
   try {
+    // Lê o progresso salvo, usando um objeto vazio se não houver dados.
     return JSON.parse(localStorage.getItem(STORE) || "{}");
   } catch {
+    // Dados inválidos são tratados como progresso vazio.
     return {};
   }
 }
 function setDone(cursoSlug, aulaSlug, done) {
+  // Marca ou desmarca a aula e persiste a alteração.
   const p = getProgress();
   p[cursoSlug] = p[cursoSlug] || {};
   if (done) p[cursoSlug][aulaSlug] = true;
@@ -22,10 +28,12 @@ function setDone(cursoSlug, aulaSlug, done) {
   localStorage.setItem(STORE, JSON.stringify(p));
 }
 function isDone(cursoSlug, aulaSlug) {
+  // Verifica se a aula está marcada como concluída.
   const p = getProgress();
   return Boolean(p[cursoSlug] && p[cursoSlug][aulaSlug]);
 }
 function pct(curso) {
+  // Calcula a porcentagem de aulas concluídas no curso.
   if (!curso.aulas.length) return 0;
   const p = getProgress()[curso.slug] || {};
   const n = curso.aulas.filter((a) => p[a.slug]).length;
@@ -33,6 +41,7 @@ function pct(curso) {
 }
 
 /* ---------- ícones ---------- */
+// Ícones SVG reutilizados nos elementos da interface.
 const ICO = {
   check:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
@@ -48,7 +57,9 @@ const ICO = {
 
 /* ---------- dados ---------- */
 async function load() {
+  // Reutiliza os dados já carregados para evitar novas requisições.
   if (DATA) return DATA;
+  // Busca os dados compilados dos cursos.
   const res = await fetch("cursos.json", { cache: "no-cache" });
   if (!res.ok) throw new Error("cursos.json nao encontrado. Rode: npm run build");
   DATA = await res.json();
@@ -57,12 +68,14 @@ async function load() {
 
 /* ---------- scroll bar ---------- */
 function trackReading() {
+  // Acompanha a rolagem do artigo e atualiza a barra de leitura.
   const article = document.querySelector("article");
   if (!article) {
     readbar.style.width = "0%";
     return;
   }
   const update = () => {
+    // Calcula a fração do artigo percorrida e mantém o valor entre 0 e 1.
     const top = article.getBoundingClientRect().top + window.scrollY;
     const height = article.offsetHeight;
     const seen = window.scrollY + window.innerHeight - top;
@@ -76,6 +89,7 @@ function trackReading() {
 
 /* ---------- roteamento ---------- */
 function route() {
+  // Lê a rota no hash e decide qual conteúdo deve ser exibido.
   const hash = location.hash.replace(/^#\/?/, "");
   const [cursoSlug, aulaSlug] = hash.split("/").filter(Boolean);
   app.classList.remove("layout", "home");
@@ -88,6 +102,7 @@ function route() {
 
 /* ---------- HOME ---------- */
 async function renderHome() {
+  // Carrega os cursos e renderiza a página inicial.
   let data;
   try {
     data = await load();
@@ -99,6 +114,7 @@ async function renderHome() {
   readbar.style.width = "0%";
 
   if (!data.cursos.length) {
+    // Informa como adicionar cursos quando a lista está vazia.
     app.className = "home";
     app.innerHTML =
       '<div class="empty"><h1>Nenhum curso ainda</h1>' +
@@ -106,11 +122,13 @@ async function renderHome() {
     return;
   }
 
+  // Soma o total de aulas concluídas em todos os cursos.
   const feitos = data.cursos.reduce((n, c) => {
     const p = getProgress()[c.slug] || {};
     return n + c.aulas.filter((a) => p[a.slug]).length;
   }, 0);
 
+  // Cria o cabeçalho e os cartões de cursos com seus dados e progresso.
   app.className = "home";
   app.innerHTML =
     '<section class="hero">' +
@@ -127,6 +145,7 @@ async function renderHome() {
     '<div class="grid">' +
     data.cursos
       .map((c) => {
+        // Calcula o progresso e monta o cartão individual do curso.
         const p = pct(c);
         return (
           '<a class="card" href="#/' + c.slug + '">' +
@@ -154,6 +173,7 @@ async function renderHome() {
 
 /* ---------- CURSO ---------- */
 async function renderCurso(slug) {
+  // Carrega e localiza o curso solicitado pela rota.
   let data;
   try {
     data = await load();
@@ -167,10 +187,12 @@ async function renderCurso(slug) {
   document.title = curso.title + " \u00b7 Cursos";
 
   if (curso.aulas.length) {
+    // Se houver aulas, abre diretamente a primeira.
     location.replace("#/" + slug + "/" + curso.aulas[0].slug);
     return;
   }
 
+  // Renderiza o conteúdo introdutório de um curso sem aulas.
   app.className = "layout";
   app.innerHTML =
     "<aside>" +
@@ -182,6 +204,7 @@ async function renderCurso(slug) {
 
 /* ---------- AULA ---------- */
 async function renderAula(cursoSlug, aulaSlug) {
+  // Carrega os dados e valida a existência do curso e da aula.
   let data;
   try {
     data = await load();
@@ -192,9 +215,11 @@ async function renderAula(cursoSlug, aulaSlug) {
   const curso = data.cursos.find((c) => c.slug === cursoSlug);
   if (!curso) return renderNotFound();
 
+  // Localiza a posição da aula para determinar navegação e numeração.
   const i = curso.aulas.findIndex((a) => a.slug === aulaSlug);
   if (i === -1) return renderNotFound();
 
+  // Reúne a aula atual, as vizinhas e o estado de progresso.
   const aula = curso.aulas[i];
   const prev = curso.aulas[i - 1];
   const next = curso.aulas[i + 1];
@@ -205,6 +230,7 @@ async function renderAula(cursoSlug, aulaSlug) {
 
   const proxima = next || curso.aulas[0];
 
+  // Monta a navegação lateral, o conteúdo e os controles da aula.
   app.className = "layout";
   app.innerHTML =
     "<aside>" +
@@ -217,6 +243,7 @@ async function renderAula(cursoSlug, aulaSlug) {
     "<nav>" +
     curso.aulas
       .map((a, idx) => {
+        // Cria os links da lista e destaca a aula atual e as concluídas.
         const d = isDone(cursoSlug, a.slug);
         const active = a.slug === aulaSlug;
         return (
@@ -247,19 +274,20 @@ async function renderAula(cursoSlug, aulaSlug) {
     '<div class="pager">' +
     (prev
       ? '<a class="prev" href="#/' + cursoSlug + "/" + prev.slug + '">' +
-        '<span class="pager-dir">' + ICO.back + " Anterior</span>" +
-        '<span class="pager-title">' + prev.title + "</span></a>"
+      '<span class="pager-dir">' + ICO.back + " Anterior</span>" +
+      '<span class="pager-title">' + prev.title + "</span></a>"
       : "<span></span>") +
     (proxima
       ? '<a class="next" href="#/' + cursoSlug + "/" + proxima.slug + '">' +
-        '<span class="pager-dir">' + (next ? "Proxima" : "Recomecar") + " " + ICO.arrow + "</span>" +
-        '<span class="pager-title">' + proxima.title + "</span></a>"
+      '<span class="pager-dir">' + (next ? "Proxima" : "Recomecar") + " " + ICO.arrow + "</span>" +
+      '<span class="pager-title">' + proxima.title + "</span></a>"
       : '<a class="next" href="#/">' +
-        '<span class="pager-dir">Fim do curso ' + ICO.arrow + "</span>" +
-        '<span class="pager-title">Voltar aos cursos</span></a>') +
+      '<span class="pager-dir">Fim do curso ' + ICO.arrow + "</span>" +
+      '<span class="pager-title">Voltar aos cursos</span></a>') +
     "</div>" +
     "</article>";
 
+  // Alterna o estado de conclusão ao clicar no botão.
   const btn = document.getElementById("mark-done");
   btn.addEventListener("click", () => {
     const now = !isDone(cursoSlug, aulaSlug);
@@ -267,12 +295,14 @@ async function renderAula(cursoSlug, aulaSlug) {
     renderAula(cursoSlug, aulaSlug);
   });
 
+  // Volta ao topo e ativa o indicador de leitura.
   window.scrollTo({ top: 0 });
   trackReading();
 }
 
 /* ---------- erros ---------- */
 function renderNotFound() {
+  // Exibe a tela 404 para uma rota inexistente.
   app.className = "home";
   app.innerHTML =
     '<div class="empty"><h1>404</h1><p>Conteudo nao encontrado.</p>' +
@@ -281,6 +311,7 @@ function renderNotFound() {
 }
 
 function renderError(msg) {
+  // Exibe erros de carregamento e permite recarregar a página.
   app.className = "home";
   app.innerHTML =
     '<div class="empty"><h1>Ops</h1><p>' + msg + "</p>" +
@@ -289,11 +320,13 @@ function renderError(msg) {
 }
 
 /* ---------- init ---------- */
+// Permite abrir ou fechar o menu pelo botão, quando disponível.
 if (menuToggle) {
   menuToggle.addEventListener("click", () =>
     document.body.classList.toggle("menu-open")
   );
 }
 
+// Re-renderiza ao mudar o hash e inicia a aplicação na rota atual.
 window.addEventListener("hashchange", route);
 route();
